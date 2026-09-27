@@ -1,0 +1,217 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #fff8f5;
+  --on-background: #1f1b17;
+  --surface: #fff8f5;
+  --surface-dim: #e2d8d2;
+  --surface-bright: #fff8f5;
+  --surface-variant: #eae1da;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #fcf2eb;
+  --surface-container: #f6ece6;
+  --surface-container-high: #f0e6e0;
+  --surface-container-highest: #eae1da;
+  --on-surface: #1f1b17;
+  --on-surface-variant: #3f493f;
+  --outline: #6f7a6e;
+  --outline-variant: #becabc;
+  --inverse-surface: #342f2b;
+  --inverse-on-surface: #f9efe8;
+  --primary: #00652c;
+  --primary-container: #15803d;
+  --on-primary: #ffffff;
+  --on-primary-container: #d3ffd5;
+  --inverse-primary: #79db8d;
+  --secondary: #904d00;
+  --secondary-container: #fe932c;
+  --on-secondary: #ffffff;
+  --error: #ba1a1a;
+  --error-container: #ffdad6;
+}
+
+html.dark {
+  --background: #191613;
+  --on-background: #f9efe8;
+  --surface: #1f1b17;
+  --surface-dim: #26211d;
+  --surface-bright: #342f2b;
+  --surface-variant: #3a342f;
+  --surface-container-lowest: #14110f;
+  --surface-container-low: #1f1b17;
+  --surface-container: #28231e;
+  --surface-container-high: #322c26;
+  --surface-container-highest: #3d3630;
+  --on-surface: #f9efe8;
+  --on-surface-variant: #c5b8af;
+  --outline: #94877e;
+  --outline-variant: #4e4640;
+  --inverse-surface: #24201c;
+  --inverse-on-surface: #f9efe8;
+  --primary-container: #16a34a;
+  --inverse-primary: #86efac;
+}
+
+@theme {
+  --color-primary: var(--primary);
+  --color-primary-container: var(--primary-container);
+  --color-on-primary: var(--on-primary);
+  --color-on-primary-container: var(--on-primary-container);
+  --color-inverse-primary: var(--inverse-primary);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-container: var(--secondary-container);
+  --color-on-secondary: var(--on-secondary);
+
+  --color-surface: var(--surface);
+  --color-surface-dim: var(--surface-dim);
+  --color-surface-bright: var(--surface-bright);
+  --color-surface-variant: var(--surface-variant);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--outline-variant);
+  --color-inverse-surface: var(--inverse-surface);
+  --color-inverse-on-surface: var(--inverse-on-surface);
+
+  --color-background: var(--background);
+  --color-on-background: var(--on-background);
+
+  --color-error: var(--error);
+  --color-error-container: var(--error-container);
+
+  --spacing-gutter: 1.5rem;
+  --spacing-gutter-mobile: 1rem;
+  --spacing-margin: 2rem;
+  --spacing-margin-mobile: 1rem;
+  --spacing-space-xs: 0.25rem;
+  --spacing-space-sm: 0.5rem;
+  --spacing-space-md: 1rem;
+  --spacing-space-lg: 1.5rem;
+  --spacing-space-xl: 2.5rem;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--on-surface);
+  font-family: var(--font-plus-jakarta), "Noto Sans Ethiopic", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Material Symbols Outlined Font Support */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Typography Utility Classes from Stitch Specification */
+.text-headline-xl {
+  font-size: 2.5rem;
+  line-height: 3.25rem;
+  letter-spacing: -0.015em;
+  font-weight: 700;
+}
+.text-headline-xl-mobile {
+  font-size: 1.75rem;
+  line-height: 2.375rem;
+  letter-spacing: -0.01em;
+  font-weight: 700;
+}
+.text-headline-lg {
+  font-size: 2rem;
+  line-height: 2.75rem;
+  letter-spacing: -0.01em;
+  font-weight: 700;
+}
+.text-headline-lg-mobile {
+  font-size: 1.5rem;
+  line-height: 2.125rem;
+  letter-spacing: -0.005em;
+  font-weight: 700;
+}
+.text-headline-md {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+}
+.text-headline-sm {
+  font-size: 1.125rem;
+  line-height: 1.625rem;
+  font-weight: 600;
+}
+.text-body-lg {
+  font-size: 1.125rem;
+  line-height: 1.875rem;
+  font-weight: 400;
+}
+.text-body-md {
+  font-size: 1rem;
+  line-height: 1.625rem;
+  font-weight: 400;
+}
+.text-body-sm {
+  font-size: 0.875rem;
+  line-height: 1.375rem;
+  font-weight: 400;
+}
+.text-label-lg {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  letter-spacing: 0.01em;
+  font-weight: 600;
+}
+.text-label-md {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  letter-spacing: 0.02em;
+  font-weight: 600;
+}
+.text-label-sm {
+  font-size: 0.6875rem;
+  line-height: 0.875rem;
+  letter-spacing: 0.03em;
+  font-weight: 500;
+}
+.text-display-lg {
+  font-size: 3.5rem;
+  line-height: 4.25rem;
+  letter-spacing: -0.02em;
+  font-weight: 800;
+}
+.text-display-lg-mobile {
+  font-size: 2.25rem;
+  line-height: 2.875rem;
+  letter-spacing: -0.02em;
+  font-weight: 800;
+}
+
+.font-headline-xl,
+.font-headline-lg,
+.font-headline-md,
+.font-headline-sm,
+.font-label-lg,
+.font-label-md,
+.font-label-sm,
+.font-body-lg,
+.font-body-md,
+.font-body-sm {
+  font-family: inherit;
+}
