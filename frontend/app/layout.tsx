@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { LanguageProvider } from '@/components/LanguageContext';
@@ -14,6 +14,16 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: 'Dessie Local - Service Marketplace',
   description: 'Find trusted local services or offer your own services in Dessie, Ethiopia.',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#fff8f5' },
+    { media: '(prefers-color-scheme: dark)', color: '#141210' },
+  ],
 };
 
 export default function RootLayout({

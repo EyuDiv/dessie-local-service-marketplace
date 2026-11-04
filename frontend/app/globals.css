@@ -105,6 +105,12 @@ html.dark {
   --spacing-space-xl: 2.5rem;
 }
 
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   background-color: var(--background);
   color: var(--on-surface);
