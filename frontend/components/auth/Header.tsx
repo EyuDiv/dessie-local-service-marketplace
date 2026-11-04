@@ -24,7 +24,7 @@ export default function Header() {
             <span className="leading-tight font-extrabold text-on-surface dark:text-inverse-on-surface">
               {t.brandTitle}
             </span>
-            <span className="text-label-sm font-label-sm text-outline font-normal">
+            <span className="text-label-sm font-label-sm text-outline dark:text-inverse-on-surface/75 font-normal">
               {t.brandSubtitle}
             </span>
           </div>
@@ -41,7 +41,7 @@ export default function Header() {
               className={`px-3 py-1 rounded-full text-label-md font-label-md transition-all duration-150 ${
                 lang === 'en'
                   ? 'font-semibold bg-primary-container text-white shadow-xs'
-                  : 'font-medium text-on-surface-variant dark:text-outline-variant hover:text-on-surface dark:hover:text-inverse-on-surface'
+                  : 'font-medium text-on-surface-variant dark:text-inverse-on-surface/80 hover:text-on-surface dark:hover:text-white'
               }`}
             >
               EN
@@ -53,7 +53,7 @@ export default function Header() {
               className={`px-3 py-1 rounded-full text-label-md font-label-md transition-all duration-150 ${
                 lang === 'am'
                   ? 'font-semibold bg-primary-container text-white shadow-xs'
-                  : 'font-medium text-on-surface-variant dark:text-outline-variant hover:text-on-surface dark:hover:text-inverse-on-surface'
+                  : 'font-medium text-on-surface-variant dark:text-inverse-on-surface/80 hover:text-on-surface dark:hover:text-white'
               }`}
             >
               አማ
@@ -66,7 +66,7 @@ export default function Header() {
             type="button"
             aria-label="Toggle theme mode"
             onClick={toggleTheme}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-inverse-primary hover:bg-surface-container dark:hover:bg-surface-dim transition-colors duration-150 cursor-pointer"
+            className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant dark:text-inverse-on-surface/85 hover:text-primary dark:hover:text-inverse-primary hover:bg-surface-container dark:hover:bg-surface-dim transition-colors duration-150 cursor-pointer"
           >
             {theme === 'dark' ? (
               <span className="material-symbols-outlined text-[20px]">light_mode</span>

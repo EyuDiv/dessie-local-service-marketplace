@@ -67,9 +67,82 @@ export interface Translations {
   loginSuccessNoticeDesc: string;
   logoutSuccessTitle: string;
   dashboardCustomer: string;
+  dashboardCustomerSubtitle: string;
   dashboardProvider: string;
+  dashboardProviderSubtitle: string;
   dashboardAdmin: string;
+  dashboardAdminSubtitle: string;
   dashboardPlaceholder: string;
+  callProviderBtn: string;
+  providerPhoneLabel: string;
+  statusPendingVerification: string;
+  pendingVerificationNotice: string;
+  labelCvUpload: string;
+  cvUploadHelp: string;
+  labelCertificateUpload: string;
+  certificateUploadHelp: string;
+  fileSelected: string;
+  btnRemoveFile: string;
+  btnChooseFile: string;
+  btnReplaceFile: string;
+  dragDropText: string;
+  errCvInvalidType: string;
+  errCvTooLarge: string;
+  errCertificateInvalidType: string;
+  errCertificateTooLarge: string;
+  uploadingFiles: string;
+  adminProvidersTitle: string;
+  adminProvidersSubtitle: string;
+  filterAllProviders: string;
+  filterPendingProviders: string;
+  filterVerifiedProviders: string;
+  filterRejectedProviders: string;
+  colBusiness: string;
+  colContact: string;
+  colExperience: string;
+  colDocuments: string;
+  colStatus: string;
+  colActions: string;
+  badgeHasCv: string;
+  badgeNoCv: string;
+  badgeHasCert: string;
+  badgeNoCert: string;
+  btnViewCv: string;
+  btnViewCertificate: string;
+  btnApprove: string;
+  btnReject: string;
+  confirmApproveTitle: string;
+  confirmApproveMsg: string;
+  confirmRejectTitle: string;
+  confirmRejectMsg: string;
+  rejectionReasonLabel: string;
+  rejectionReasonPlaceholder: string;
+  statusRejected: string;
+  rejectionNoticeTitle: string;
+  rejectionNoticeDesc: string;
+  reUploadCvBtn: string;
+  cvUploadedSuccess: string;
+  emptyProviders: string;
+  loadingDocument: string;
+  dashWelcome: string;
+  dashTotalRequests: string;
+  dashActiveRequests: string;
+  dashCompletedRequests: string;
+  dashVerifiedPros: string;
+  dashRecentRequests: string;
+  dashNoRequests: string;
+  dashNoRequestsSub: string;
+  dashQuickActions: string;
+  dashPopularCategories: string;
+  dashIncomingJobs: string;
+  dashNoIncomingJobs: string;
+  dashManageServices: string;
+  dashAddService: string;
+  dashAvailability: string;
+  dashAcceptJob: string;
+  dashDeclineJob: string;
+  dashStartJob: string;
+  dashCompleteJob: string;
   dashboardUser: string;
   dashboardRole: string;
   dashboardEmail: string;
@@ -104,6 +177,10 @@ export interface Translations {
   emptyStateTitle: string;
   emptyStateSubtitle: string;
   emptyResetBtn: string;
+  searchResultsFor: string;
+  searchClearBtn: string;
+  searchNoResultsFound: string;
+  searchNoResultsDesc: string;
   errorTitle: string;
   errorSubtitle: string;
   errorRetryBtn: string;
@@ -274,9 +351,82 @@ export const translations: Record<Language, Translations> = {
     loginSuccessNoticeDesc: "Welcome back to Dessie Local. Redirecting...",
     logoutSuccessTitle: "Logged out successfully",
     dashboardCustomer: "Customer Dashboard",
+    dashboardCustomerSubtitle: "Welcome to your customer portal. Discover verified local service providers, browse offerings, and manage your service requests in Dessie.",
     dashboardProvider: "Provider Dashboard",
+    dashboardProviderSubtitle: "Welcome to your provider portal. View your professional profile, verification status, and availability in Dessie.",
     dashboardAdmin: "Admin Dashboard",
-    dashboardPlaceholder: "This is a placeholder destination route. The complete dashboard module will be implemented in a future step.",
+    dashboardAdminSubtitle: "Welcome to the administration portal. Oversee platform accounts, provider verifications, and marketplace activity in Dessie.",
+    dashboardPlaceholder: "Welcome to your Dessie Local marketplace portal.",
+    callProviderBtn: "Call Provider",
+    providerPhoneLabel: "Phone",
+    statusPendingVerification: "Pending Municipality Verification",
+    pendingVerificationNotice: "Your provider account has been registered and is currently pending municipal verification. Once verified by the city administrator, your profile will be published on the public marketplace.",
+    labelCvUpload: "Curriculum Vitae (CV / Resume)",
+    cvUploadHelp: "Upload your CV in PDF format (Max 5MB). Required for municipal verification.",
+    labelCertificateUpload: "Professional Certificate (Optional)",
+    certificateUploadHelp: "Upload vocational or trade certificate (PDF, PNG, JPG - Max 5MB)",
+    fileSelected: "Selected File",
+    btnRemoveFile: "Remove file",
+    btnChooseFile: "Choose File",
+    btnReplaceFile: "Replace file",
+    dragDropText: "Drag and drop your file here, or click to browse",
+    errCvInvalidType: "Only PDF files are accepted for CV.",
+    errCvTooLarge: "CV file size must not exceed 5MB.",
+    errCertificateInvalidType: "Only PDF, JPG, and PNG files are accepted.",
+    errCertificateTooLarge: "Certificate file size must not exceed 5MB.",
+    uploadingFiles: "Uploading documents...",
+    adminProvidersTitle: "Provider Verification Management",
+    adminProvidersSubtitle: "Review submitted profiles, inspect candidate CVs, and approve or reject marketplace applications in Dessie.",
+    filterAllProviders: "All Providers",
+    filterPendingProviders: "Pending Verification",
+    filterVerifiedProviders: "Verified",
+    filterRejectedProviders: "Rejected",
+    colBusiness: "Business / Provider",
+    colContact: "Contact Details",
+    colExperience: "Experience & Location",
+    colDocuments: "Submitted Documents",
+    colStatus: "Verification Status",
+    colActions: "Actions",
+    badgeHasCv: "CV Available (PDF)",
+    badgeNoCv: "No CV Submitted",
+    badgeHasCert: "Certificate Available",
+    badgeNoCert: "No Certificate",
+    btnViewCv: "View CV",
+    btnViewCertificate: "View Certificate",
+    btnApprove: "Approve",
+    btnReject: "Reject",
+    confirmApproveTitle: "Approve Provider Application?",
+    confirmApproveMsg: "This will mark the provider as verified, making their profile visible in the public marketplace for customer bookings.",
+    confirmRejectTitle: "Reject Provider Application",
+    confirmRejectMsg: "Please provide a reason for rejecting this provider. This explanation will be displayed on the provider's dashboard.",
+    rejectionReasonLabel: "Rejection Reason",
+    rejectionReasonPlaceholder: "Enter constructive feedback or missing requirements...",
+    statusRejected: "Rejected",
+    rejectionNoticeTitle: "Application Rejected",
+    rejectionNoticeDesc: "Your provider verification was rejected by municipal review for the following reason:",
+    reUploadCvBtn: "Upload Updated CV",
+    cvUploadedSuccess: "CV uploaded successfully. Your profile is now under review.",
+    emptyProviders: "No providers found in this category.",
+    loadingDocument: "Loading document...",
+    dashWelcome: "Welcome back",
+    dashTotalRequests: "Total Requests",
+    dashActiveRequests: "Active Jobs",
+    dashCompletedRequests: "Completed",
+    dashVerifiedPros: "Verified Pros",
+    dashRecentRequests: "Recent Service Requests",
+    dashNoRequests: "No service requests yet",
+    dashNoRequestsSub: "Find trusted local plumbers, electricians, and carpenters across Dessie.",
+    dashQuickActions: "Quick Actions",
+    dashPopularCategories: "Popular Services in Dessie",
+    dashIncomingJobs: "Incoming Job Requests",
+    dashNoIncomingJobs: "No incoming job requests yet",
+    dashManageServices: "My Offered Services",
+    dashAddService: "Add Service",
+    dashAvailability: "Availability",
+    dashAcceptJob: "Accept Job",
+    dashDeclineJob: "Decline",
+    dashStartJob: "Start Work",
+    dashCompleteJob: "Mark Completed",
     dashboardUser: "User",
     dashboardRole: "Role",
     dashboardEmail: "Email",
@@ -311,6 +461,10 @@ export const translations: Record<Language, Translations> = {
     emptyStateTitle: "No service providers found.",
     emptyStateSubtitle: "Try changing your search or filters.",
     emptyResetBtn: "Reset Filters",
+    searchResultsFor: "Search results for:",
+    searchClearBtn: "Clear search",
+    searchNoResultsFound: "Nothing found",
+    searchNoResultsDesc: "No service providers found matching your search. Try another keyword or explore popular categories below.",
     errorTitle: "Unable to load service providers.",
     errorSubtitle: "Please try again.",
     errorRetryBtn: "Retry",
@@ -384,7 +538,7 @@ export const translations: Record<Language, Translations> = {
     busyForWorkBadge: "Currently Busy",
     offlineForWorkBadge: "Offline",
     myRequestsPlaceholderTitle: "My Requests",
-    myRequestsPlaceholderDesc: "This module will be available in the upcoming update.",
+    myRequestsPlaceholderDesc: "Track the status of your service requests and direct communications with verified providers in Dessie.",
 
     errors: {
       name: "Please enter your full name.",
@@ -479,9 +633,82 @@ export const translations: Record<Language, Translations> = {
     loginSuccessNoticeDesc: "እንኳን ወደ ደሴ ሎካል በደህና ተመለሱ። በማስተላለፍ ላይ...",
     logoutSuccessTitle: "በተሳካ ሁኔታ ወጥተዋል",
     dashboardCustomer: "የደንበኛ ዳሽቦርድ",
+    dashboardCustomerSubtitle: "እንኳን ወደ ደንበኛ ፖርታልዎ በደህና መጡ። በደሴ የተረጋገጡ የአገልግሎት ሰጪዎችን ያግኙ፣ አገልግሎቶችን ያስሱ እና ጥያቄዎችዎን ያስተዳድሩ።",
     dashboardProvider: "የአገልግሎት ሰጪ ዳሽቦርድ",
+    dashboardProviderSubtitle: "እንኳን ወደ አገልግሎት ሰጪ ፖርታልዎ በደህና መጡ። በደሴ የሚገኘውን የሙያ መገለጫዎን፣ የማረጋገጫ ሁኔታዎን እና ተገኝነትዎን ይመልከቱ።",
     dashboardAdmin: "የአስተዳዳሪ ዳሽቦርድ",
-    dashboardPlaceholder: "ይህ ጊዜያዊ መዳረሻ ገጽ ነው። ሙሉው የዳሽቦርድ ክፍል በሚቀጥለው ደረጃ ይገነባል።",
+    dashboardAdminSubtitle: "እንኳን ወደ አስተዳዳሪ ፖርታል በደህና መጡ። የመለያዎችን ሁኔታ፣ የአቅራቢዎችን ማረጋገጫ እና የገበያ እንቅስቃሴዎችን በደሴ ይቆጣጠሩ።",
+    dashboardPlaceholder: "እንኳን ወደ ደሴ የአካባቢ አገልግሎት ገበያ ፖርታል በደህና መጡ።",
+    callProviderBtn: "አቅራቢውን ይደውሉ",
+    providerPhoneLabel: "ስልክ ቁጥር",
+    statusPendingVerification: "የማዘጋጃ ቤት ማረጋገጫ በመጠባበቅ ላይ",
+    pendingVerificationNotice: "የአቅራቢ መለያዎ ተመዝግቧል፤ በአሁኑ ጊዜ የማዘጋጃ ቤት ማረጋገጫ በመጠባበቅ ላይ ይገኛል። በከተማው አስተዳዳሪ ሲረጋገጥ መገለጫዎ በይፋዊው የገበያ ቦታ ላይ ይታያል።",
+    labelCvUpload: "የግል የትምህርትና የሥራ ልምድ ማስረጃ (ሲቪ)",
+    cvUploadHelp: "ሲቪዎን በፒዲኤፍ (PDF) ቅርጸት ይስቀሉ (እስከ 5ሜባ)። ለማዘጋጃ ቤት ማረጋገጫ ያስፈልጋል።",
+    labelCertificateUpload: "የሙያ ማረጋገጫ ሰርተፍኬት (አማራጭ)",
+    certificateUploadHelp: "የሙያ ወይም የንግድ ምስክር ወረቀት ይስቀሉ (PDF, PNG, JPG - እስከ 5ሜባ)",
+    fileSelected: "የተመረጠ ፋይል",
+    btnRemoveFile: "ፋይሉን አስወግድ",
+    btnChooseFile: "ፋይል ይምረጡ",
+    btnReplaceFile: "ፋይል ቀይር",
+    dragDropText: "ፋይልዎን እዚህ ይጎትቱ ወይም ለመምረጥ ጠቅ ያድርጉ",
+    errCvInvalidType: "ለሲቪ የፒዲኤፍ (PDF) ፋይሎች ብቻ ተቀባይነት አላቸው።",
+    errCvTooLarge: "የሲቪ ፋይል መጠን ከ5 ሜጋባይት መብለጥ የለበትም።",
+    errCertificateInvalidType: "PDF፣ JPG እና PNG ፋይሎች ብቻ ተቀባይነት አላቸው።",
+    errCertificateTooLarge: "የሰርተፍኬት ፋይል መጠን ከ5 ሜጋባይት መብለጥ የለበትም።",
+    uploadingFiles: "ሰነዶችን በመጫን ላይ...",
+    adminProvidersTitle: "የአገልግሎት ሰጪዎች ማረጋገጫ አስተዳደር",
+    adminProvidersSubtitle: "የቀረቡ መገለጫዎችን ይገምግሙ፣ የሲቪ ሰነዶችን ይመልከቱ፣ እና በደሴ የገበያ ቦታ ላይ ማረጋገጫ ይስጡ ወይም ውድቅ ያድርጉ።",
+    filterAllProviders: "ሁሉም አቅራቢዎች",
+    filterPendingProviders: "ማረጋገጫ በመጠባበቅ ላይ",
+    filterVerifiedProviders: "የተረጋገጡ",
+    filterRejectedProviders: "ውድቅ የተደረጉ",
+    colBusiness: "ንግድ / አገልግሎት ሰጪ",
+    colContact: "የአድራሻ መረጃ",
+    colExperience: "ልምድ እና ቦታ",
+    colDocuments: "የቀረቡ ሰነዶች",
+    colStatus: "የማረጋገጫ ሁኔታ",
+    colActions: "እርምጃዎች",
+    badgeHasCv: "ሲቪ አለ (PDF)",
+    badgeNoCv: "ምንም ሲቪ አልቀረበም",
+    badgeHasCert: "ሰርተፍኬት አለ",
+    badgeNoCert: "ምንም ሰርተፍኬት የለም",
+    btnViewCv: "ሲቪ ይመልከቱ",
+    btnViewCertificate: "ሰርተፍኬት ይመልከቱ",
+    btnApprove: "አጽድቅ",
+    btnReject: "ውድቅ አድርግ",
+    confirmApproveTitle: "የአገልግሎት ሰጪውን ማመልከቻ ማጽደቅ ይፈልጋሉ?",
+    confirmApproveMsg: "ይህ አቅራቢውን እንደተረጋገጠ ምልክት ያደርጋል፣ እና መገለጫቸው በይፋዊው የገበያ ቦታ ለደንበኞች እንዲታይ ያደርጋል።",
+    confirmRejectTitle: "የአገልግሎት ሰጪውን ማመልከቻ ውድቅ አድርግ",
+    confirmRejectMsg: "እባክዎ ይህንን አቅራቢ ውድቅ ለማድረግ ምክንያቱን ይግለጹ። ይህ ማብራሪያ በአቅራቢው ዳሽቦርድ ላይ ይታያል።",
+    rejectionReasonLabel: "ውድቅ የተደረገበት ምክንያት",
+    rejectionReasonPlaceholder: "ገንቢ አስተያየት ወይም ያልተሟሉ መስፈርቶችን ያስገቡ...",
+    statusRejected: "ውድቅ የተደረገ",
+    rejectionNoticeTitle: "ማመልከቻው ውድቅ ተደርጓል",
+    rejectionNoticeDesc: "የአቅራቢነት ማረጋገጫዎ በማዘጋጃ ቤት ግምገማ በሚከተለው ምክንያት ውድቅ ተደርጓል:",
+    reUploadCvBtn: "የተሻሻለ ሲቪ ይስቀሉ",
+    cvUploadedSuccess: "ሲቪ በተሳካ ሁኔታ ተጭኗል። መገለጫዎ አሁን በድጋሚ በግምገማ ላይ ነው።",
+    emptyProviders: "በዚህ ምድብ ውስጥ ምንም አቅራቢ አልተገኘም።",
+    loadingDocument: "ሰነድ በመጫን ላይ...",
+    dashWelcome: "እንኳን ደህና መጡ",
+    dashTotalRequests: "ጠቅላላ ጥያቄዎች",
+    dashActiveRequests: "በሂደት ላይ ያሉ",
+    dashCompletedRequests: "የተጠናቀቁ",
+    dashVerifiedPros: "የተረጋገጡ ባለሙያዎች",
+    dashRecentRequests: "የቅርብ ጊዜ የአገልግሎት ጥያቄዎች",
+    dashNoRequests: "እስካሁን ምንም የአገልግሎት ጥያቄዎች የሉም",
+    dashNoRequestsSub: "በደሴ ውስጥ የታመኑ የቧንቧ፣ የኤሌክትሪክ እና የአናጺ ባለሙያዎችን ያግኙ።",
+    dashQuickActions: "ፈጣን እርምጃዎች",
+    dashPopularCategories: "በደሴ ተወዳጅ አገልግሎቶች",
+    dashIncomingJobs: "የገቡ የስራ ጥያቄዎች",
+    dashNoIncomingJobs: "እስካሁን ምንም አዲስ የስራ ጥያቄዎች የሉም",
+    dashManageServices: "የማቀርባቸው አገልግሎቶች",
+    dashAddService: "አገልግሎት ጨምር",
+    dashAvailability: "የስራ ዝግጁነት",
+    dashAcceptJob: "ስራውን ተቀበል",
+    dashDeclineJob: "አትቀበል",
+    dashStartJob: "ስራ ጀምር",
+    dashCompleteJob: "ስራውን አጠናቅቅ",
     dashboardUser: "ተጠቃሚ",
     dashboardRole: "ሚና",
     dashboardEmail: "ኢሜይል",
@@ -516,6 +743,10 @@ export const translations: Record<Language, Translations> = {
     emptyStateTitle: "ምንም አገልግሎት ሰጪ አልተገኘም።",
     emptyStateSubtitle: "እባክዎ የፍለጋ ቃላትን ወይም ማጣሪያዎችን ይቀይሩ።",
     emptyResetBtn: "ማጣሪያዎችን ዳግም አስጀምር",
+    searchResultsFor: "የፍለጋ ውጤቶች ለ፡",
+    searchClearBtn: "ፍለጋውን አጽዳ",
+    searchNoResultsFound: "ምንም አልተገኘም",
+    searchNoResultsDesc: "ለፍለጋዎ የሚስማማ አገልግሎት ሰጪ አልተገኘም። እባክዎ ሌላ ቃል ይሞክሩ ወይም ከታች ያሉትን ታዋቂ ምድቦች ይመልከቱ።",
     errorTitle: "አገልግሎት ሰጪዎችን መጫን አልተቻለም።",
     errorSubtitle: "እባክዎ እንደገና ይሞክሩ።",
     errorRetryBtn: "እንደገና ሞክር",
@@ -589,7 +820,7 @@ export const translations: Record<Language, Translations> = {
     busyForWorkBadge: "በሥራ ላይ",
     offlineForWorkBadge: "ከመስመር ውጭ",
     myRequestsPlaceholderTitle: "የእኔ ጥያቄዎች",
-    myRequestsPlaceholderDesc: "ይህ ክፍል በሚቀጥለው ምዕራፍ የሚቀርብ ይሆናል።",
+    myRequestsPlaceholderDesc: "የአገልግሎት ጥያቄዎችዎን ሁኔታ እና በደሴ ከሚገኙ የተረጋገጡ አቅራቢዎች ጋር ቀጥተኛ ግንኙነቶችን ይከታተሉ።",
 
     errors: {
       name: "እባክዎ ሙሉ ስምዎን ያስገቡ።",

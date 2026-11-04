@@ -532,7 +532,7 @@ export default function ProviderProfilePage() {
                         {provider.business_name}
                       </h1>
 
-                      {/* Location */}
+                      {/* Location & Contact Phone */}
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-on-surface-variant dark:text-outline-variant font-label-lg text-label-lg">
                         <div className="flex items-center gap-1">
                           <span className="material-symbols-outlined text-[18px] text-secondary">
@@ -540,6 +540,20 @@ export default function ProviderProfilePage() {
                           </span>
                           <span id="profileLocation">{provider.location}, Dessie</span>
                         </div>
+                        {provider.phone && (
+                          <div className="flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[18px] text-primary-container dark:text-inverse-primary">
+                              call
+                            </span>
+                            <a
+                              id="profileHeaderPhone"
+                              href={`tel:${provider.phone}`}
+                              className="text-primary-container dark:text-inverse-primary font-mono hover:underline"
+                            >
+                              {provider.phone}
+                            </a>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -814,9 +828,27 @@ export default function ProviderProfilePage() {
                         </span>
                       </div>
                     )}
+
+                    {provider.phone && (
+                      <div className="flex items-center justify-between font-label-md text-label-md">
+                        <span className="text-on-surface-variant dark:text-outline-variant flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-[16px] text-primary-container dark:text-inverse-primary">
+                            call
+                          </span>
+                          <span>{t.providerPhoneLabel}</span>
+                        </span>
+                        <a
+                          id="actionCardPhoneLink"
+                          href={`tel:${provider.phone}`}
+                          className="font-semibold text-primary-container dark:text-inverse-primary font-mono hover:underline"
+                        >
+                          {provider.phone}
+                        </a>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Primary Action Button: Navigates to future Request Creation */}
+                  {/* Action Buttons: Request Service & Call Provider */}
                   <div className="space-y-3 pt-1">
                     <Link
                       id="desktopRequestServiceBtn"
@@ -830,6 +862,19 @@ export default function ProviderProfilePage() {
                       <span className="material-symbols-outlined text-[20px]">send</span>
                       <span>{t.requestServiceBtn}</span>
                     </Link>
+
+                    {provider.phone && (
+                      <a
+                        id="desktopCallProviderBtn"
+                        href={`tel:${provider.phone}`}
+                        className="w-full h-11 bg-surface-container-high dark:bg-surface-dim hover:bg-surface-container-highest text-on-surface dark:text-inverse-on-surface font-label-lg text-label-lg font-semibold rounded-lg border border-outline-variant/40 transition-colors duration-150 flex items-center justify-center gap-2 active:scale-[0.98] cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[20px] text-primary-container dark:text-inverse-primary">
+                          call
+                        </span>
+                        <span>{t.callProviderBtn}</span>
+                      </a>
+                    )}
 
                     <p className="font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant text-center leading-normal">
                       {t.coordinateRequestSub}
@@ -846,7 +891,19 @@ export default function ProviderProfilePage() {
       {/* MOBILE STICKY BOTTOM REQUEST CTA (< md)                         */}
       {/* ============================================================== */}
       {!dataLoading && !dataError && !notFound && provider && (
-        <div className="sticky bottom-16 left-0 w-full p-margin-mobile bg-surface-container-lowest/95 dark:bg-inverse-surface/95 backdrop-blur-md border-t border-outline-variant/30 z-40 md:hidden">
+        <div className="sticky bottom-16 left-0 w-full p-margin-mobile bg-surface-container-lowest/95 dark:bg-inverse-surface/95 backdrop-blur-md border-t border-outline-variant/30 z-40 md:hidden flex gap-2">
+          {provider.phone && (
+            <a
+              id="mobileCallProviderBtn"
+              href={`tel:${provider.phone}`}
+              className="h-12 px-4 bg-surface-container-high dark:bg-surface-dim text-on-surface dark:text-inverse-on-surface rounded-xl border border-outline-variant/40 font-label-lg text-label-lg font-semibold flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"
+            >
+              <span className="material-symbols-outlined text-xl text-primary-container dark:text-inverse-primary">
+                call
+              </span>
+              <span>{t.callProviderBtn}</span>
+            </a>
+          )}
           <Link
             id="mobileRequestServiceBtn"
             href={`/customer/requests/create?provider_id=${provider.id}${
@@ -854,7 +911,7 @@ export default function ProviderProfilePage() {
                 ? `&service_id=${provider.services[0].id}`
                 : ''
             }`}
-            className="w-full h-12 bg-primary-container text-white hover:bg-primary rounded-xl font-label-lg text-label-lg font-semibold flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
+            className="flex-1 h-12 bg-primary-container text-white hover:bg-primary rounded-xl font-label-lg text-label-lg font-semibold flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
           >
             <span className="material-symbols-outlined text-xl">send</span>
             <span>{t.requestServiceBtn}</span>

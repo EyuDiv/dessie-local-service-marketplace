@@ -33,25 +33,31 @@
 }
 
 html.dark {
-  --background: #191613;
-  --on-background: #f9efe8;
-  --surface: #1f1b17;
-  --surface-dim: #26211d;
-  --surface-bright: #342f2b;
-  --surface-variant: #3a342f;
+  --background: #141210;
+  --on-background: #fcf8f5;
+  --surface: #1c1916;
+  --surface-dim: #24201c;
+  --surface-bright: #322c26;
+  --surface-variant: #3d3630;
   --surface-container-lowest: #14110f;
-  --surface-container-low: #1f1b17;
-  --surface-container: #28231e;
-  --surface-container-high: #322c26;
-  --surface-container-highest: #3d3630;
-  --on-surface: #f9efe8;
-  --on-surface-variant: #c5b8af;
-  --outline: #94877e;
+  --surface-container-low: #1c1916;
+  --surface-container: #24201c;
+  --surface-container-high: #2e2924;
+  --surface-container-highest: #38322c;
+  --on-surface: #fcf8f5;
+  --on-surface-variant: #dfd5ce;
+  --outline: #c4b6ab;
   --outline-variant: #4e4640;
   --inverse-surface: #24201c;
-  --inverse-on-surface: #f9efe8;
-  --primary-container: #16a34a;
+  --inverse-on-surface: #fcf8f5;
+  --primary-container: #22c55e;
   --inverse-primary: #86efac;
+  --secondary: #fe932c;
+  --secondary-container: #fe932c;
+  --error: #f87171;
+  --error-container: #fca5a5;
+
+  color-scheme: dark;
 }
 
 @theme {
@@ -103,6 +109,25 @@ body {
   background-color: var(--background);
   color: var(--on-surface);
   font-family: var(--font-plus-jakarta), "Noto Sans Ethiopic", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Ensure any dark:text-outline-variant or text-outline is crisp, high-contrast, and never blurry */
+html.dark .dark\:text-outline-variant,
+html.dark [class*="dark:text-outline-variant"] {
+  color: #dfd5ce !important;
+}
+
+html.dark .text-outline {
+  color: #c4b6ab;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #a89a90 !important;
+  opacity: 1 !important;
 }
 
 /* Material Symbols Outlined Font Support */

@@ -27,6 +27,12 @@ export interface ServiceRequestItem {
     location: string;
     availability_status?: string;
   };
+  customer?: {
+    id: number;
+    name: string;
+    phone?: string;
+    email?: string;
+  };
   service?: {
     id: number;
     name: string;
@@ -49,5 +55,42 @@ export const createServiceRequest = async (
     '/requests',
     payload
   );
+  return response.data;
+};
+
+export const getCustomerRequests = async (): Promise<ServiceRequestItem[]> => {
+  const response = await apiClient.get<{ data: ServiceRequestItem[] }>('/requests');
+  return response.data.data;
+};
+
+export const getProviderRequests = async (): Promise<ServiceRequestItem[]> => {
+  const response = await apiClient.get<{ data: ServiceRequestItem[] }>('/provider/requests');
+  return response.data.data;
+};
+
+export const acceptProviderRequest = async (id: number | string): Promise<any> => {
+  const response = await apiClient.put(`/provider/requests/${id}/accept`);
+  return response.data;
+};
+
+export const rejectProviderRequest = async (id: number | string): Promise<any> => {
+  const response = await apiClient.put(`/provider/requests/${id}/reject`);
+  return response.data;
+};
+
+export const startProviderRequest = async (id: number | string): Promise<any> => {
+  const response = await apiClient.put(`/provider/requests/${id}/start`);
+  return response.data;
+};
+
+export const completeProviderRequest = async (id: number | string): Promise<any> => {
+  const response = await apiClient.put(`/provider/requests/${id}/complete`);
+  return response.data;
+};
+
+export const updateProviderAvailability = async (
+  availability_status: 'available' | 'busy' | 'offline'
+): Promise<any> => {
+  const response = await apiClient.put('/provider/availability', { availability_status });
   return response.data;
 };

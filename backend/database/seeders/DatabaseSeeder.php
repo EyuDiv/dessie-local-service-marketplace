@@ -15,11 +15,18 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        if (! app()->isProduction()) {
+            User::firstOrCreate(
+                ['email' => env('LOCAL_ADMIN_EMAIL', 'admin@dessie.local')],
+                [
+                    'name' => 'Dessie Platform Admin',
+                    'phone' => env('LOCAL_ADMIN_PHONE', '+251911000001'),
+                    'role' => 'admin',
+                    'password' => \Illuminate\Support\Facades\Hash::make(env('LOCAL_ADMIN_PASSWORD', 'DessieAdmin2026!Secure')),
+                ]
+            );
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+            $this->call(DemoProviderSeeder::class);
+        }
     }
 }

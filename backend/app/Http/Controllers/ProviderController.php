@@ -6,6 +6,8 @@ use App\Models\ProviderProfile;
 use App\Models\Service;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ProviderController extends Controller
 {
@@ -24,6 +26,45 @@ class ProviderController extends Controller
 
         return response()->json([
             'data' => $profile,
+        ]);
+    }
+
+    /**
+     * Upload or update the authenticated provider's CV.
+     */
+    public function uploadCv(Request $request): JsonResponse
+    {
+        $profile = $request->user()->providerProfile;
+
+        if (! $profile) {
+            return response()->json([
+                'message' => 'Provider profile not found.',
+            ], 404);
+        }
+
+        $request->validate([
+            'cv' => ['required', 'file', 'mimes:pdf', 'max:5120'], // Max 5MB PDF
+        ]);
+
+        $file = $request->file('cv');
+        $originalName = $file->getClientOriginalName();
+        $randomFilename = Str::random(40) . '.pdf';
+        $newPath = $file->storeAs('cvs', $randomFilename, 'local');
+
+        // Delete old CV file if present to avoid storage clutter
+        if ($profile->cv_path && Storage::disk('local')->exists($profile->cv_path)) {
+            Storage::disk('local')->delete($profile->cv_path);
+        }
+
+        $profile->update([
+            'cv_path' => $newPath,
+            'cv_original_name' => $originalName,
+            'verification_status' => 'pending', // Re-trigger review upon document update
+        ]);
+
+        return response()->json([
+            'message' => 'CV uploaded successfully.',
+            'data' => $profile->fresh(),
         ]);
     }
 
@@ -194,7 +235,27 @@ class ProviderController extends Controller
             $query->where('availability_status', $request->availability_status);
         }
 
-        $providers = $query->with(['services:id,name,description'])->get([
+        // Optional search filter: q or search
+        if ($request->filled('q') || $request->filled('search')) {
+            $term = trim($request->input('q', $request->input('search')));
+            if ($term !== '') {
+                $query->where(function ($sub) use ($term) {
+                    $sub->where('business_name', 'like', "%{$term}%")
+                        ->orWhere('description', 'like', "%{$term}%")
+                        ->orWhere('location', 'like', "%{$term}%")
+                        ->orWhereHas('services', function ($s) use ($term) {
+                            $s->where('name', 'like', "%{$term}%")
+                              ->orWhere('description', 'like', "%{$term}%");
+                        })
+                        ->orWhereHas('user', function ($u) use ($term) {
+                            $u->where('name', 'like', "%{$term}%")
+                              ->orWhere('phone', 'like', "%{$term}%");
+                        });
+                });
+            }
+        }
+
+        $providers = $query->with(['services:id,name,description', 'user:id,name,phone'])->get([
             'id',
             'user_id',
             'business_name',

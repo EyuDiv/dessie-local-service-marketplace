@@ -68,6 +68,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/profile', [ProviderController::class, 'profile']);
         Route::put('/profile', [ProviderController::class, 'updateProfile']);
         Route::put('/availability', [ProviderController::class, 'updateAvailability']);
+        Route::post('/cv', [ProviderController::class, 'uploadCv']);
 
         // Offered Services
         Route::get('/services', [ProviderController::class, 'services']);
@@ -101,6 +102,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // Provider Management & Verification
         Route::get('/admin/providers', [AdminProviderController::class, 'index']);
         Route::put('/admin/providers/{provider}/verification', [AdminProviderController::class, 'updateVerification']);
+        Route::get('/admin/providers/{provider}/cv', [AdminProviderController::class, 'downloadCv']);
+        Route::get('/admin/providers/{provider}/certificate', [AdminProviderController::class, 'downloadCertificate']);
 
         // Service Requests Oversight
         Route::get('/admin/requests', [AdminRequestController::class, 'index']);

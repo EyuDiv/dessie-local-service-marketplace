@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState, useMemo, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useLanguage } from '@/components/LanguageContext';
 import { useTheme } from '@/components/ThemeContext';
@@ -34,8 +34,74 @@ const DESSIE_NEIGHBORHOODS = [
   'Buanbuawha',
 ];
 
-export default function FindServicePage() {
+// Bilingual synonyms dictionary for robust English & Amharic search in Dessie
+const SERVICE_SYNONYMS: Record<string, string[]> = {
+  plumbing: ['plumb', 'pipe', 'leak', 'water', 'ቧንቧ', 'የቧንቧ', 'ውሃ', 'ፍሳሽ', 'ቧንቧ ውሃ'],
+  electrical: ['electr', 'wire', 'light', 'breaker', 'volt', 'power', 'ኤሌክትሪክ', 'የኤሌክትሪክ', 'መብራት', 'ሽቦ', 'ኃይል'],
+  cleaning: ['clean', 'sanitize', 'wash', 'housekeep', 'maid', 'ጽዳት', 'የጽዳት', 'ማጽዳት', 'ቤት ጽዳት'],
+  carpentry: ['carpent', 'wood', 'furniture', 'door', 'table', 'chair', 'አናጺ', 'የአናጺ', 'እንጨት', 'የእንጨት', 'በር', 'ቁምሳጥን', 'ወንበር'],
+  painting: ['paint', 'color', 'wall', 'ቀለም', 'የቀለም', 'ቅብ', 'የቀለም ቅብ', 'ግድግዳ'],
+  tech: ['tech', 'comp', 'pc', 'repair', 'phone', 'software', 'laptop', 'ቴክ', 'ኮምፒውተር', 'ስልክ', 'ጥገና', 'የኮምፒውተር ጥገና', 'ላፕቶፕ'],
+  photo: ['photo', 'camera', 'video', 'shoot', 'ፎቶ', 'ካሜራ', 'ቪዲዮ'],
+  tutor: ['tutor', 'teach', 'learn', 'math', 'school', 'english', 'አስተማሪ', 'ትምህርት', 'ማስተማር', 'እንግሊዝኛ'],
+};
+
+const LOCATION_SYNONYMS: Record<string, string[]> = {
+  piazza: ['piazza', 'piassa', 'ፒያሳ'],
+  hotie: ['hotie', 'hote', 'ሆቴ'],
+  menhariya: ['menhariya', 'መናኸሪያ', 'መናሀሪያ'],
+  arada: ['arada', 'አራዳ'],
+  robit: ['robit', 'ሮቢት'],
+  buanbuawha: ['buanbuawha', 'buanbua', 'ቧንቧ ውሃ', 'ቧንቧውሃ'],
+};
+
+// Matches query against provider attributes with bilingual synonym support
+const matchesProviderSearch = (provider: Provider, rawQuery: string): boolean => {
+  const q = rawQuery.toLowerCase().trim();
+  if (!q) return true;
+
+  // 1. Direct text match on business name, description, location, phone, username
+  if (provider.business_name?.toLowerCase().includes(q)) return true;
+  if (provider.description?.toLowerCase().includes(q)) return true;
+  if (provider.location?.toLowerCase().includes(q)) return true;
+  if (provider.phone?.includes(q)) return true;
+  if (provider.user?.name?.toLowerCase().includes(q)) return true;
+
+  // 2. Direct match on attached services names and descriptions
+  if (
+    provider.services?.some(
+      (s) => s.name?.toLowerCase().includes(q) || s.description?.toLowerCase().includes(q)
+    )
+  ) {
+    return true;
+  }
+
+  // 3. Bilingual / synonym matching for services
+  for (const [key, synonyms] of Object.entries(SERVICE_SYNONYMS)) {
+    const queryMatchesSynonym = synonyms.some((syn) => q.includes(syn) || syn.includes(q));
+    if (queryMatchesSynonym) {
+      const providerOffers =
+        provider.services?.some((s) => s.name?.toLowerCase().includes(key) || key.includes(s.name?.toLowerCase())) ||
+        provider.business_name?.toLowerCase().includes(key) ||
+        (provider.description?.toLowerCase().includes(key) ?? false);
+      if (providerOffers) return true;
+    }
+  }
+
+  // 4. Bilingual / synonym matching for Dessie neighborhoods
+  for (const [key, synonyms] of Object.entries(LOCATION_SYNONYMS)) {
+    const queryMatchesLocation = synonyms.some((syn) => q.includes(syn) || syn.includes(q));
+    if (queryMatchesLocation) {
+      if (provider.location?.toLowerCase().includes(key)) return true;
+    }
+  }
+
+  return false;
+};
+
+function FindServiceContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { lang, setLang, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
 
@@ -55,6 +121,14 @@ export default function FindServicePage() {
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [selectedAvailability, setSelectedAvailability] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  // Read URL search params on mount
+  useEffect(() => {
+    const qParam = searchParams?.get('q') || searchParams?.get('search');
+    if (qParam && qParam.trim()) {
+      setSearchQuery(qParam.trim());
+    }
+  }, [searchParams]);
 
   // 1. Authenticate customer
   useEffect(() => {
@@ -92,6 +166,17 @@ export default function FindServicePage() {
       });
   }, []);
 
+  // Match optional service name from URL after services load
+  useEffect(() => {
+    const serviceParam = searchParams?.get('service');
+    if (serviceParam && services.length > 0) {
+      const match = services.find((s) => s.name.toLowerCase() === serviceParam.toLowerCase());
+      if (match) {
+        setSelectedServiceId(match.id);
+      }
+    }
+  }, [searchParams, services]);
+
   // 3. Fetch verified providers according to backend filters
   const fetchProviders = useCallback(async () => {
     setDataLoading(true);
@@ -114,18 +199,20 @@ export default function FindServicePage() {
     fetchProviders();
   }, [fetchProviders]);
 
-  // Client-side text search over returned verified providers
+  // Client-side text search over returned verified providers with bilingual support
   const filteredProviders = useMemo(() => {
     if (!searchQuery.trim()) return providers;
-    const q = searchQuery.toLowerCase().trim();
-    return providers.filter((p) => {
-      const matchBusiness = p.business_name.toLowerCase().includes(q);
-      const matchDesc = p.description?.toLowerCase().includes(q) ?? false;
-      const matchLoc = p.location.toLowerCase().includes(q);
-      const matchServices = p.services.some((s) => s.name.toLowerCase().includes(q));
-      return matchBusiness || matchDesc || matchLoc || matchServices;
-    });
+    return providers.filter((p) => matchesProviderSearch(p, searchQuery));
   }, [providers, searchQuery]);
+
+  // Handle explicit search submission (clicking button or pressing Enter)
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const resultsEl = document.getElementById('resultsCanvas');
+    if (resultsEl) {
+      resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   // Combined locations list: default Dessie neighborhoods + any from returned providers
   const locationOptions = useMemo(() => {
@@ -371,8 +458,11 @@ export default function FindServicePage() {
 
           {/* SEARCH BAR */}
           <section className="mb-5">
-            <div className="relative bg-surface-container-lowest dark:bg-inverse-surface rounded-xl shadow-xs border border-outline-variant/40 p-1.5 flex items-center transition-all focus-within:ring-2 focus-within:ring-primary-container focus-within:border-primary-container">
-              <div className="pl-3 flex items-center pointer-events-none text-outline">
+            <form
+              onSubmit={handleSearchSubmit}
+              className="relative bg-surface-container-lowest dark:bg-inverse-surface rounded-xl shadow-xs border border-outline-variant/40 p-1.5 flex items-center transition-all focus-within:ring-2 focus-within:ring-primary-container focus-within:border-primary-container gap-2"
+            >
+              <div className="pl-3 flex items-center pointer-events-none text-outline shrink-0">
                 <span className="material-symbols-outlined text-[24px]">search</span>
               </div>
               <input
@@ -381,25 +471,27 @@ export default function FindServicePage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t.searchPlaceholder}
-                className="w-full bg-transparent border-none text-on-surface dark:text-inverse-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none px-3 py-2 outline-none"
+                className="w-full bg-transparent border-none text-on-surface dark:text-inverse-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none px-2 py-2 outline-none"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
                   aria-label="Clear search"
-                  className="pr-2 text-outline hover:text-on-surface dark:hover:text-inverse-on-surface cursor-pointer"
+                  className="p-1.5 text-outline hover:text-on-surface dark:hover:text-inverse-on-surface cursor-pointer shrink-0"
                 >
                   <span className="material-symbols-outlined text-[20px]">close</span>
                 </button>
               )}
               <button
-                type="button"
-                className="hidden sm:inline-flex items-center px-4 py-2 bg-primary-container hover:bg-primary text-white rounded-lg font-label-md text-label-md transition-colors shadow-xs cursor-pointer"
+                id="searchSubmitBtn"
+                type="submit"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary-container hover:bg-primary text-white rounded-lg font-label-md text-label-md font-bold transition-colors shadow-xs cursor-pointer shrink-0"
               >
+                <span className="material-symbols-outlined text-[18px]">search</span>
                 <span>{t.searchBtn}</span>
               </button>
-            </div>
+            </form>
           </section>
 
           {/* SERVICE CATEGORY FILTER CHIPS (Loaded from GET /api/services) */}
@@ -510,6 +602,26 @@ export default function FindServicePage() {
           {/* RESULTS CANVAS (Loading / Error / Empty / Provider Cards)       */}
           {/* ============================================================== */}
           <div id="resultsCanvas">
+            {/* Active search filter badge */}
+            {searchQuery.trim() && !dataLoading && (
+              <div className="flex items-center gap-2 mb-4 p-3 rounded-xl bg-primary-container/10 border border-primary-container/20 text-on-surface dark:text-inverse-on-surface">
+                <span className="material-symbols-outlined text-[20px] text-primary-container">
+                  search
+                </span>
+                <span className="text-body-sm font-medium">
+                  {t.searchResultsFor} <strong className="font-bold text-primary-container dark:text-inverse-primary">"{searchQuery}"</strong> ({filteredProviders.length} {t.showingSuffix})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="ml-auto text-xs font-bold text-primary-container dark:text-inverse-primary hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[16px]">close</span>
+                  <span>{t.searchClearBtn}</span>
+                </button>
+              </div>
+            )}
+
             {/* 1. LOADING SKELETON STATE */}
             {dataLoading && (
               <div id="loadingView" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -571,31 +683,78 @@ export default function FindServicePage() {
             {!dataLoading && !dataError && filteredProviders.length === 0 && (
               <div
                 id="emptyView"
-                className="flex flex-col items-center justify-center p-12 text-center bg-surface-container-lowest dark:bg-inverse-surface rounded-2xl border border-outline-variant/30 my-6 shadow-xs"
+                className="flex flex-col items-center justify-center p-8 sm:p-12 text-center bg-surface-container-lowest dark:bg-inverse-surface rounded-2xl border border-outline-variant/30 my-6 shadow-xs space-y-4"
               >
-                <div className="w-16 h-16 rounded-full bg-surface-container dark:bg-surface-dim flex items-center justify-center text-outline mb-4">
+                <div className="w-16 h-16 rounded-full bg-surface-container dark:bg-surface-dim flex items-center justify-center text-outline">
                   <span className="material-symbols-outlined text-[36px]">search_off</span>
                 </div>
-                <h3
-                  id="emptyStateTitle"
-                  className="font-headline-md text-headline-md font-bold text-on-surface dark:text-inverse-on-surface"
-                >
-                  {t.emptyStateTitle}
-                </h3>
-                <p
-                  id="emptyStateSubtitle"
-                  className="font-body-md text-body-md text-on-surface-variant dark:text-outline-variant mt-2 max-w-sm"
-                >
-                  {t.emptyStateSubtitle}
-                </p>
-                <button
-                  id="emptyResetBtn"
-                  type="button"
-                  onClick={handleResetFilters}
-                  className="mt-5 px-5 py-2.5 rounded-lg bg-primary-container text-white font-label-md text-label-md hover:bg-primary transition-colors cursor-pointer shadow-xs"
-                >
-                  <span>{t.emptyResetBtn}</span>
-                </button>
+                <div className="space-y-1">
+                  <h3
+                    id="emptyStateTitle"
+                    className="font-headline-md text-xl font-bold text-on-surface dark:text-inverse-on-surface"
+                  >
+                    {searchQuery.trim()
+                      ? lang === 'am'
+                        ? `ለ "${searchQuery}" ${t.searchNoResultsFound}`
+                        : `${t.searchNoResultsFound} for "${searchQuery}"`
+                      : t.emptyStateTitle}
+                  </h3>
+                  <p
+                    id="emptyStateSubtitle"
+                    className="font-body-md text-body-md text-on-surface-variant dark:text-outline-variant max-w-md mx-auto"
+                  >
+                    {searchQuery.trim()
+                      ? t.searchNoResultsDesc
+                      : t.emptyStateSubtitle}
+                  </p>
+                </div>
+
+                {/* Actions */}
+                <div className="pt-2 flex flex-wrap items-center justify-center gap-2">
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="px-4 py-2 rounded-xl bg-surface-container dark:bg-surface-dim hover:bg-surface-container-high text-on-surface dark:text-inverse-on-surface font-semibold text-xs border border-outline-variant/40 transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">close</span>
+                      <span>{t.searchClearBtn}</span>
+                    </button>
+                  )}
+                  <button
+                    id="emptyResetBtn"
+                    type="button"
+                    onClick={handleResetFilters}
+                    className="px-5 py-2 rounded-xl bg-primary-container text-white font-label-md text-label-md font-bold hover:bg-primary transition-colors cursor-pointer shadow-xs flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">refresh</span>
+                    <span>{t.emptyResetBtn}</span>
+                  </button>
+                </div>
+
+                {/* Quick Service Suggestions */}
+                {services.length > 0 && (
+                  <div className="pt-4 border-t border-outline-variant/20 w-full max-w-md">
+                    <p className="text-xs text-outline dark:text-outline-variant mb-2 font-medium">
+                      {lang === 'am' ? 'ታዋቂ የአገልግሎት ምድቦችን ይሞክሩ፡' : 'Try searching popular services:'}
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      {services.slice(0, 4).map((svc) => (
+                        <button
+                          key={svc.id}
+                          type="button"
+                          onClick={() => {
+                            setSearchQuery('');
+                            setSelectedServiceId(svc.id);
+                          }}
+                          className="px-3 py-1 rounded-full text-xs font-semibold bg-surface-container-high dark:bg-surface-dim hover:bg-primary-container hover:text-white transition-colors text-on-surface dark:text-inverse-on-surface border border-outline-variant/30 cursor-pointer"
+                        >
+                          {svc.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -612,23 +771,26 @@ export default function FindServicePage() {
                   return (
                     <article
                       key={provider.id}
-                      className="provider-card bg-surface-container-lowest dark:bg-inverse-surface rounded-xl border border-outline-variant/30 dark:border-outline/20 p-5 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between"
+                      className="provider-card bg-surface-container-lowest dark:bg-inverse-surface rounded-xl border border-outline-variant/30 dark:border-outline/20 p-5 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between overflow-hidden"
                     >
-                      <div>
+                      <div className="w-full min-w-0">
                         {/* Header: Service Icon + Business Name + Verified Badge */}
                         <div className="flex items-start justify-between gap-3 mb-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-xl bg-primary-container/15 text-primary-container dark:text-inverse-primary flex items-center justify-center font-bold text-lg border border-primary-container/20 shrink-0">
+                          <div className="flex items-start gap-3 min-w-0 flex-1">
+                            <div className="w-12 h-12 rounded-xl bg-primary-container/15 text-primary-container dark:text-inverse-primary flex items-center justify-center font-bold text-lg border border-primary-container/20 shrink-0 mt-0.5">
                               <span className="material-symbols-outlined text-[26px]">
                                 {serviceIcon}
                               </span>
                             </div>
-                            <div className="min-w-0">
-                              <h3 className="font-headline-sm text-headline-sm font-bold text-on-surface dark:text-inverse-on-surface leading-snug truncate">
+                            <div className="min-w-0 flex-1">
+                              <h3
+                                className="font-headline-sm text-base sm:text-lg font-bold text-on-surface dark:text-inverse-on-surface leading-snug break-words line-clamp-2"
+                                title={provider.business_name}
+                              >
                                 {provider.business_name}
                               </h3>
                               {provider.experience_years > 0 && (
-                                <p className="font-body-sm text-body-sm text-on-surface-variant dark:text-outline-variant flex items-center gap-1">
+                                <p className="font-body-sm text-body-sm text-on-surface-variant dark:text-outline-variant flex items-center gap-1 mt-0.5">
                                   <span className="material-symbols-outlined text-[14px]">timeline</span>
                                   <span>
                                     {provider.experience_years} {t.experienceYearsSuffix}
@@ -639,7 +801,7 @@ export default function FindServicePage() {
                           </div>
 
                           {/* Verified Badge */}
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-container/10 text-primary-container dark:text-inverse-primary border border-primary-container/20 shrink-0">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-container/10 text-primary-container dark:text-inverse-primary border border-primary-container/20 shrink-0 self-start">
                             <span
                               className="material-symbols-outlined text-[14px]"
                               style={{ fontVariationSettings: "'FILL' 1" }}
@@ -652,7 +814,7 @@ export default function FindServicePage() {
 
                         {/* Description snippet if available */}
                         {provider.description && (
-                          <p className="text-body-sm font-body-sm text-on-surface-variant dark:text-outline-variant line-clamp-2 mt-2">
+                          <p className="text-body-sm font-body-sm text-on-surface-variant dark:text-outline-variant line-clamp-2 mt-2 break-words">
                             {provider.description}
                           </p>
                         )}
@@ -662,36 +824,47 @@ export default function FindServicePage() {
                           {provider.services?.map((svc) => (
                             <span
                               key={svc.id}
-                              className="px-2.5 py-1 rounded-md text-xs font-semibold bg-surface-container dark:bg-surface-dim text-on-surface dark:text-inverse-on-surface border border-outline-variant/20"
+                              className="px-2.5 py-1 rounded-md text-xs font-semibold bg-surface-container dark:bg-surface-dim text-on-surface dark:text-inverse-on-surface border border-outline-variant/20 max-w-full truncate"
+                              title={svc.name}
                             >
                               {svc.name}
                             </span>
                           ))}
-                          <span className="px-2.5 py-1 rounded-md text-xs text-outline dark:text-outline-variant flex items-center gap-1 bg-surface-container-low dark:bg-surface-dim/40 border border-outline-variant/20">
-                            <span className="material-symbols-outlined text-[13px]">location_on</span>
-                            <span>{provider.location}, Dessie</span>
+                          <span className="px-2.5 py-1 rounded-md text-xs text-outline dark:text-outline-variant flex items-center gap-1 bg-surface-container-low dark:bg-surface-dim/40 border border-outline-variant/20 max-w-full">
+                            <span className="material-symbols-outlined text-[13px] shrink-0">location_on</span>
+                            <span className="truncate">{provider.location}, Dessie</span>
                           </span>
+                          {provider.phone && (
+                            <a
+                              href={`tel:${provider.phone}`}
+                              className="px-2.5 py-1 rounded-md text-xs text-primary-container dark:text-inverse-primary font-mono flex items-center gap-1 bg-primary-container/10 border border-primary-container/20 hover:underline shrink-0"
+                              title={t.callProviderBtn}
+                            >
+                              <span className="material-symbols-outlined text-[13px] shrink-0">call</span>
+                              <span>{provider.phone}</span>
+                            </a>
+                          )}
                         </div>
                       </div>
 
                       {/* Footer of Card: Availability & Profile Action */}
-                      <div className="mt-5 pt-4 border-t border-outline-variant/30 dark:border-outline/20 flex items-center justify-between">
+                      <div className="mt-5 pt-4 border-t border-outline-variant/30 dark:border-outline/20 flex items-center justify-between gap-2">
                         {/* Availability Status */}
                         {provider.availability_status === 'available' && (
-                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary-container dark:text-inverse-primary">
-                            <span className="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
+                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary-container dark:text-inverse-primary shrink-0">
+                            <span className="w-2 h-2 rounded-full bg-primary-container animate-pulse shrink-0"></span>
                             <span>{t.statusAvailable}</span>
                           </span>
                         )}
                         {provider.availability_status === 'busy' && (
-                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-secondary">
-                            <span className="w-2 h-2 rounded-full bg-secondary"></span>
+                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-secondary shrink-0">
+                            <span className="w-2 h-2 rounded-full bg-secondary shrink-0"></span>
                             <span>{t.statusBusy}</span>
                           </span>
                         )}
                         {provider.availability_status === 'offline' && (
-                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-outline">
-                            <span className="w-2 h-2 rounded-full bg-outline"></span>
+                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-outline shrink-0">
+                            <span className="w-2 h-2 rounded-full bg-outline shrink-0"></span>
                             <span>{t.statusOffline}</span>
                           </span>
                         )}
@@ -699,10 +872,10 @@ export default function FindServicePage() {
                         {/* View Profile Action Link (navigation only, per specification) */}
                         <Link
                           href={`/customer/providers/${provider.id}`}
-                          className="px-3.5 py-1.5 rounded-lg bg-surface-container-high dark:bg-surface-dim hover:bg-primary-container hover:text-white dark:hover:bg-primary-container text-on-surface dark:text-inverse-on-surface font-label-md text-label-md transition-colors flex items-center gap-1 shadow-2xs"
+                          className="px-3.5 py-1.5 rounded-lg bg-surface-container-high dark:bg-surface-dim hover:bg-primary-container hover:text-white dark:hover:bg-primary-container text-on-surface dark:text-inverse-on-surface font-label-md text-label-md transition-colors flex items-center gap-1 shadow-2xs shrink-0"
                         >
                           <span>{t.btnViewProfile}</span>
-                          <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                          <span className="material-symbols-outlined text-[16px] shrink-0">arrow_forward</span>
                         </Link>
                       </div>
                     </article>
@@ -770,5 +943,21 @@ export default function FindServicePage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function FindServicePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <span className="material-symbols-outlined text-[36px] animate-spin text-primary-container">
+            progress_activity
+          </span>
+        </div>
+      }
+    >
+      <FindServiceContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/components/LanguageContext';
 import {
@@ -24,6 +24,8 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
   const [authMode, setAuthMode] = useState<'register' | 'login'>(initialMode);
   const [role, setRole] = useState<'customer' | 'provider'>('customer');
 
+  const registrationFormRef = useRef<HTMLFormElement>(null);
+
   // Password visibility
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -42,9 +44,77 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
   const [experienceYears, setExperienceYears] = useState('');
   const [description, setDescription] = useState('');
 
+  // Provider document upload states
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [certFile, setCertFile] = useState<File | null>(null);
+  const cvInputRef = useRef<HTMLInputElement>(null);
+  const certInputRef = useRef<HTMLInputElement>(null);
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
+
+  const handleCvSelect = (file: File | null) => {
+    if (!file) return;
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      setErrors((prev) => ({ ...prev, cv: t.errCvInvalidType }));
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setErrors((prev) => ({ ...prev, cv: t.errCvTooLarge }));
+      return;
+    }
+    setCvFile(file);
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next.cv;
+      return next;
+    });
+  };
+
+  const handleCertSelect = (file: File | null) => {
+    if (!file) return;
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+    const ext = file.name.toLowerCase().split('.').pop();
+    if (!allowedTypes.includes(file.type) && !['pdf', 'jpg', 'jpeg', 'png'].includes(ext || '')) {
+      setErrors((prev) => ({ ...prev, certificate: t.errCertificateInvalidType }));
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setErrors((prev) => ({ ...prev, certificate: t.errCertificateTooLarge }));
+      return;
+    }
+    setCertFile(file);
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next.certificate;
+      return next;
+    });
+  };
+
   // Login states
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+
+  // Reset registration form state to empty on initial mount / page refresh
+  useEffect(() => {
+    setName('');
+    setEmail('');
+    setPhone('');
+    setPassword('');
+    setPasswordConfirmation('');
+    setBusinessName('');
+    setLocation('');
+    setExperienceYears('');
+    setDescription('');
+    setCvFile(null);
+    setCertFile(null);
+    if (registrationFormRef.current) {
+      registrationFormRef.current.reset();
+    }
+  }, []);
 
   // UI state: errors & loading
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -58,6 +128,8 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
     setErrors({});
     setGeneralError(null);
     setSuccessMessage(null);
+    setCvFile(null);
+    setCertFile(null);
   };
 
 
@@ -141,22 +213,31 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
         };
         await registerUser(payload);
       } else {
-        const payload: RegisterProviderData = {
-          name: name.trim(),
-          email: email.trim(),
-          phone: phone.trim(),
-          password,
-          password_confirmation: passwordConfirmation,
-          role: 'provider',
-          business_name: businessName.trim(),
-          description: description.trim(),
-          experience_years: parseInt(experienceYears, 10),
-          location: location.trim(),
-        };
-        await registerUser(payload);
+        const formData = new FormData();
+        formData.append('name', name.trim());
+        formData.append('email', email.trim());
+        formData.append('phone', phone.trim());
+        formData.append('password', password);
+        formData.append('password_confirmation', passwordConfirmation);
+        formData.append('role', 'provider');
+        formData.append('business_name', businessName.trim());
+        formData.append('description', description.trim());
+        formData.append('experience_years', String(parseInt(experienceYears, 10) || 0));
+        formData.append('location', location.trim());
+        if (cvFile) {
+          formData.append('cv', cvFile);
+        }
+        if (certFile) {
+          formData.append('certificate', certFile);
+        }
+        await registerUser(formData);
       }
 
       setSuccessMessage(t.successNoticeTitle);
+
+      // Clear password values from memory immediately after successful registration
+      setPassword('');
+      setPasswordConfirmation('');
 
       // Verify authenticated user role from server via /me
       const me = await getCurrentUser();
@@ -364,7 +445,14 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
 
           {/* REGISTER FORM */}
           {authMode === 'register' && (
-            <form id="registrationForm" onSubmit={handleRegisterSubmit} noValidate className="space-y-space-md">
+            <form
+              id="registrationForm"
+              ref={registrationFormRef}
+              onSubmit={handleRegisterSubmit}
+              noValidate
+              autoComplete="off"
+              className="space-y-space-md"
+            >
               {/* ROLE SELECTOR */}
               <div id="roleSelectorContainer">
                 <label
@@ -507,6 +595,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                       name="name"
                       type="text"
                       required
+                      autoComplete="off"
                       value={name}
                       onChange={(e) => {
                         setName(e.target.value);
@@ -542,6 +631,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                         name="email"
                         type="email"
                         required
+                        autoComplete="off"
                         value={email}
                         onChange={(e) => {
                           setEmail(e.target.value);
@@ -575,6 +665,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                         name="phone"
                         type="tel"
                         required
+                        autoComplete="off"
                         value={phone}
                         onChange={(e) => {
                           setPhone(e.target.value);
@@ -612,6 +703,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                         type={showPassword ? 'text' : 'password'}
                         minLength={8}
                         required
+                        autoComplete="new-password"
                         value={password}
                         onChange={(e) => {
                           setPassword(e.target.value);
@@ -658,6 +750,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                         type={showConfirmPassword ? 'text' : 'password'}
                         minLength={8}
                         required
+                        autoComplete="new-password"
                         value={passwordConfirmation}
                         onChange={(e) => {
                           setPasswordConfirmation(e.target.value);
@@ -709,6 +802,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                         id="business_name"
                         name="business_name"
                         type="text"
+                        autoComplete="off"
                         value={businessName}
                         onChange={(e) => {
                           setBusinessName(e.target.value);
@@ -743,6 +837,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                           id="location"
                           name="location"
                           type="text"
+                          autoComplete="off"
                           value={location}
                           onChange={(e) => {
                             setLocation(e.target.value);
@@ -775,6 +870,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                           id="experience_years"
                           name="experience_years"
                           type="number"
+                          autoComplete="off"
                           min={0}
                           max={60}
                           value={experienceYears}
@@ -805,6 +901,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                     <textarea
                       id="description"
                       name="description"
+                      autoComplete="off"
                       rows={3}
                       value={description}
                       onChange={(e) => {
@@ -819,6 +916,215 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                         {errors.description}
                       </p>
                     )}
+                  </div>
+
+                  {/* DOCUMENT UPLOAD SECTION FOR PROVIDERS */}
+                  <div id="providerDocumentsSection" className="pt-space-sm border-t border-outline-variant/30 space-y-space-md">
+                    <div>
+                      <h4 className="text-label-lg font-label-lg font-bold text-on-surface dark:text-inverse-on-surface">
+                        {t.labelCvUpload}
+                      </h4>
+                      <p className="text-body-sm font-body-sm text-on-surface-variant dark:text-outline-variant mt-0.5">
+                        {t.cvUploadHelp}
+                      </p>
+                    </div>
+
+                    {/* CV Upload Card */}
+                    <div className="space-y-2">
+                      <input
+                        ref={cvInputRef}
+                        id="cv_file_input"
+                        type="file"
+                        accept=".pdf,application/pdf"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null;
+                          handleCvSelect(file);
+                        }}
+                      />
+
+                      {!cvFile ? (
+                        <div
+                          id="cvDropZone"
+                          onClick={() => cvInputRef.current?.click()}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const file = e.dataTransfer.files?.[0] || null;
+                            handleCvSelect(file);
+                          }}
+                          className="border-2 border-dashed border-outline-variant/60 hover:border-primary-container rounded-xl p-5 text-center cursor-pointer transition-all bg-surface-container-low/50 dark:bg-surface-dim/30 hover:bg-surface-container/70 group"
+                        >
+                          <div className="w-12 h-12 rounded-full bg-primary-container/10 text-primary-container dark:text-inverse-primary mx-auto flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                            <span className="material-symbols-outlined text-[26px]">upload_file</span>
+                          </div>
+                          <p className="font-label-lg text-label-lg font-semibold text-on-surface dark:text-inverse-on-surface">
+                            {t.btnChooseFile}
+                          </p>
+                          <p className="font-body-sm text-body-sm text-on-surface-variant dark:text-outline-variant mt-1">
+                            {t.dragDropText}
+                          </p>
+                          <span className="inline-block mt-2 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container dark:bg-surface-dim text-outline">
+                            PDF • Max 5MB
+                          </span>
+                        </div>
+                      ) : (
+                        <div
+                          id="cvFileSelectedCard"
+                          className="p-3.5 rounded-xl border border-primary-container/40 bg-primary-container/5 dark:bg-primary-container/10 flex items-center justify-between gap-3 shadow-2xs"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-10 h-10 rounded-lg bg-primary-container text-white flex items-center justify-center shrink-0 shadow-xs">
+                              <span className="material-symbols-outlined text-[22px]">picture_as_pdf</span>
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-label-lg text-label-lg font-bold text-on-surface dark:text-inverse-on-surface truncate">
+                                {cvFile.name}
+                              </p>
+                              <p className="font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant flex items-center gap-2">
+                                <span>{formatFileSize(cvFile.size)}</span>
+                                <span className="inline-flex items-center text-primary-container dark:text-inverse-primary font-medium text-xs">
+                                  <span className="material-symbols-outlined text-[14px] mr-0.5">check_circle</span>
+                                  Ready to upload
+                                </span>
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              id="replaceCvBtn"
+                              type="button"
+                              onClick={() => cvInputRef.current?.click()}
+                              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-surface-container dark:bg-surface-dim hover:bg-surface-container-high text-on-surface dark:text-inverse-on-surface transition-colors cursor-pointer"
+                            >
+                              {t.btnReplaceFile}
+                            </button>
+                            <button
+                              id="removeCvBtn"
+                              type="button"
+                              onClick={() => {
+                                setCvFile(null);
+                                if (cvInputRef.current) cvInputRef.current.value = '';
+                              }}
+                              className="p-1.5 rounded-lg text-error hover:bg-error-container/40 dark:hover:bg-error/20 transition-colors cursor-pointer"
+                              title={t.btnRemoveFile}
+                            >
+                              <span className="material-symbols-outlined text-[18px]">close</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      {errors.cv && (
+                        <p id="cvError" className="text-error text-label-sm font-label-sm mt-1">
+                          {errors.cv}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Certificate Upload Card (Optional) */}
+                    <div className="space-y-2 pt-1">
+                      <div>
+                        <label
+                          htmlFor="cert_file_input"
+                          className="block text-label-md font-label-md text-on-surface dark:text-inverse-on-surface"
+                        >
+                          {t.labelCertificateUpload}
+                        </label>
+                        <p className="text-body-sm font-body-sm text-on-surface-variant dark:text-outline-variant mt-0.5">
+                          {t.certificateUploadHelp}
+                        </p>
+                      </div>
+
+                      <input
+                        ref={certInputRef}
+                        id="cert_file_input"
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null;
+                          handleCertSelect(file);
+                        }}
+                      />
+
+                      {!certFile ? (
+                        <div
+                          id="certDropZone"
+                          onClick={() => certInputRef.current?.click()}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const file = e.dataTransfer.files?.[0] || null;
+                            handleCertSelect(file);
+                          }}
+                          className="border border-dashed border-outline-variant/60 hover:border-secondary rounded-xl p-4 text-center cursor-pointer transition-all bg-surface-container-low/30 dark:bg-surface-dim/20 hover:bg-surface-container/50 group"
+                        >
+                          <div className="w-10 h-10 rounded-full bg-secondary/10 text-secondary mx-auto flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
+                            <span className="material-symbols-outlined text-[22px]">workspace_premium</span>
+                          </div>
+                          <p className="font-label-md text-label-md font-semibold text-on-surface dark:text-inverse-on-surface">
+                            {t.btnChooseFile}
+                          </p>
+                          <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container dark:bg-surface-dim text-outline">
+                            PDF, JPG, PNG • Max 5MB
+                          </span>
+                        </div>
+                      ) : (
+                        <div
+                          id="certFileSelectedCard"
+                          className="p-3.5 rounded-xl border border-secondary/40 bg-secondary/5 dark:bg-secondary/10 flex items-center justify-between gap-3 shadow-2xs"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-10 h-10 rounded-lg bg-secondary text-white flex items-center justify-center shrink-0 shadow-xs">
+                              <span className="material-symbols-outlined text-[22px]">verified</span>
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-label-lg text-label-lg font-bold text-on-surface dark:text-inverse-on-surface truncate">
+                                {certFile.name}
+                              </p>
+                              <p className="font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant">
+                                {formatFileSize(certFile.size)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              id="replaceCertBtn"
+                              type="button"
+                              onClick={() => certInputRef.current?.click()}
+                              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-surface-container dark:bg-surface-dim hover:bg-surface-container-high text-on-surface dark:text-inverse-on-surface transition-colors cursor-pointer"
+                            >
+                              {t.btnReplaceFile}
+                            </button>
+                            <button
+                              id="removeCertBtn"
+                              type="button"
+                              onClick={() => {
+                                setCertFile(null);
+                                if (certInputRef.current) certInputRef.current.value = '';
+                              }}
+                              className="p-1.5 rounded-lg text-error hover:bg-error-container/40 dark:hover:bg-error/20 transition-colors cursor-pointer"
+                              title={t.btnRemoveFile}
+                            >
+                              <span className="material-symbols-outlined text-[18px]">close</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      {errors.certificate && (
+                        <p id="certError" className="text-error text-label-sm font-label-sm mt-1">
+                          {errors.certificate}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -844,7 +1150,11 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                   disabled={isSubmitting}
                   className="w-full h-12 rounded-lg bg-primary-container text-white font-headline-sm text-headline-sm flex items-center justify-center gap-space-sm shadow hover:bg-primary-container/95 active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-4 focus:ring-primary-container/25 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  <span id="btnText">{isSubmitting ? t.btnRegisterLoading : t.btnRegisterText}</span>
+                  <span id="btnText">
+                    {isSubmitting
+                      ? (cvFile || certFile ? t.uploadingFiles : t.btnRegisterLoading)
+                      : t.btnRegisterText}
+                  </span>
                   {isSubmitting && (
                     <span id="btnSpinner" className="material-symbols-outlined text-[20px] animate-spin">
                       progress_activity
@@ -890,6 +1200,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                     name="loginEmail"
                     type="email"
                     required
+                    autoComplete="username"
                     value={loginEmail}
                     onChange={(e) => {
                       setLoginEmail(e.target.value);
@@ -923,6 +1234,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                     name="loginPassword"
                     type={showLoginPassword ? 'text' : 'password'}
                     required
+                    autoComplete="current-password"
                     value={loginPassword}
                     onChange={(e) => {
                       setLoginPassword(e.target.value);

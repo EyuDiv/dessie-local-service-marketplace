@@ -27,6 +27,11 @@ export interface User {
     location: string;
     availability_status: string;
     verification_status: string;
+    cv_original_name?: string | null;
+    certificate_original_name?: string | null;
+    has_cv?: boolean;
+    has_certificate?: boolean;
+    rejection_reason?: string | null;
   } | null;
 }
 
@@ -50,6 +55,8 @@ export interface RegisterProviderData {
   description: string;
   experience_years: number;
   location: string;
+  cv?: File | null;
+  certificate?: File | null;
 }
 
 export interface LoginData {
@@ -120,12 +127,23 @@ export function formatApiError(error: unknown, defaultMessage = 'An unexpected e
 }
 
 // Authentication API methods
-export async function registerUser(payload: RegisterCustomerData | RegisterProviderData): Promise<AuthResponse> {
-  const response = await apiClient.post<AuthResponse>('/register', payload);
+export async function registerUser(payload: RegisterCustomerData | RegisterProviderData | FormData): Promise<AuthResponse> {
+  const isFormData = typeof FormData !== 'undefined' && payload instanceof FormData;
+  const config = isFormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined;
+  const response = await apiClient.post<AuthResponse>('/register', payload, config);
   if (response.data.token) {
     setStoredToken(response.data.token);
     setStoredUser(response.data.user);
   }
+  return response.data;
+}
+
+export async function uploadProviderCv(file: File): Promise<{ message: string; data: any }> {
+  const formData = new FormData();
+  formData.append('cv', file);
+  const response = await apiClient.post<{ message: string; data: any }>('/provider/cv', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
   return response.data;
 }
 
@@ -159,7 +177,7 @@ export async function getCurrentUser(): Promise<User> {
 export function getRoleDestination(role: UserRole): string {
   switch (role) {
     case 'customer':
-      return '/customer';
+      return '/customer/services';
     case 'provider':
       return '/provider';
     case 'admin':

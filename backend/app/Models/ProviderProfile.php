@@ -32,7 +32,58 @@ class ProviderProfile extends Model
         'location',
         'availability_status',
         'verification_status',
+        'cv_path',
+        'cv_original_name',
+        'certificate_path',
+        'certificate_original_name',
+        'rejection_reason',
     ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     * Keeps raw filesystem storage paths private.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'cv_path',
+        'certificate_path',
+    ];
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var list<string>
+     */
+    protected $appends = [
+        'phone',
+        'has_cv',
+        'has_certificate',
+    ];
+
+    /**
+     * Get provider contact phone number from associated user.
+     */
+    public function getPhoneAttribute(): ?string
+    {
+        return $this->user?->phone;
+    }
+
+    /**
+     * Check if a CV has been uploaded.
+     */
+    public function getHasCvAttribute(): bool
+    {
+        return ! empty($this->cv_path) || ! empty($this->cv_original_name);
+    }
+
+    /**
+     * Check if a professional certificate has been uploaded.
+     */
+    public function getHasCertificateAttribute(): bool
+    {
+        return ! empty($this->certificate_path) || ! empty($this->certificate_original_name);
+    }
 
     /**
      * Get the attributes that should be cast.
