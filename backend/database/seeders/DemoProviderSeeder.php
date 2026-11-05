@@ -39,11 +39,12 @@ class DemoProviderSeeder extends Seeder
             ]
         );
 
-        // 2. Ensure demo CV file exists in private local storage
+        // 2. Ensure demo CV file exists in private storage
+        $privateDisk = config('filesystems.private_disk', 'local');
         $demoCvFilename = 'demo_provider_cv.pdf';
         $demoCvPath = 'cvs/' . $demoCvFilename;
-        if (! Storage::disk('local')->exists($demoCvPath)) {
-            Storage::disk('local')->put(
+        if (! Storage::disk($privateDisk)->exists($demoCvPath)) {
+            Storage::disk($privateDisk)->put(
                 $demoCvPath,
                 "%PDF-1.4\n1 0 obj\n<< /Title (Demo Dessie Provider CV) /Author (Demo Provider) >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF"
             );

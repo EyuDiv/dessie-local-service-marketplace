@@ -114,4 +114,16 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Authentication Rate Limiting
+    |--------------------------------------------------------------------------
+    |
+    | Maximum authentication attempts (login and register) allowed per minute
+    | per IP address before requests are throttled with HTTP 429.
+    |
+    */
+
+    'rate_limit' => (int) env('AUTH_RATE_LIMIT_PER_MINUTE', 10),
+
 ];

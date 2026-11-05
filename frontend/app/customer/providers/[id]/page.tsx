@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import ConfirmLogoutModal from '@/components/ConfirmLogoutModal';
 import { useLanguage } from '@/components/LanguageContext';
 import { useTheme } from '@/components/ThemeContext';
 import { getCurrentUser, logoutUser, User, getStoredToken } from '@/lib/api/auth';
@@ -38,6 +39,7 @@ export default function ProviderProfilePage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Data States
   const [provider, setProvider] = useState<Provider | null>(null);
@@ -314,7 +316,7 @@ export default function ProviderProfilePage() {
             <button
               id="sidebarSignOutBtn"
               type="button"
-              onClick={handleLogout}
+              onClick={() => setShowLogoutModal(true)}
               disabled={loggingOut}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-error hover:bg-error-container/40 dark:hover:bg-error/20 transition-colors duration-150 focus:outline-none cursor-pointer disabled:opacity-50"
             >
@@ -974,6 +976,14 @@ export default function ProviderProfilePage() {
           </div>
         </div>
       </footer>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmLogoutModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleLogout}
+        loading={loggingOut}
+      />
     </div>
   );
 }

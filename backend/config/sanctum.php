@@ -47,10 +47,36 @@ return [
     | This value controls the number of minutes until an issued token will be
     | considered expired. This will override any values set in the token's
     | "expires_at" attribute, but first-party sessions are not affected.
+    | Defaults to 10080 minutes (7 days) for mobile and web API security.
     |
     */
 
-    'expiration' => null,
+    'expiration' => (function () {
+        $raw = env('SANCTUM_EXPIRATION_MINUTES', '__UNSET__');
+
+        // 1. Unset in environment: use documented default of 10080 minutes (7 days)
+        if ($raw === '__UNSET__') {
+            return 10080;
+        }
+
+        // 2. Literal null or string 'null': intentionally non-expiring tokens
+        if ($raw === null || $raw === 'null') {
+            return null;
+        }
+
+        // 3. Empty string or whitespace: fallback safely to 10080, never 0
+        if (is_string($raw) && trim($raw) === '') {
+            return 10080;
+        }
+
+        // 4. Valid integer greater than zero
+        if (is_numeric($raw) && (int) $raw > 0) {
+            return (int) $raw;
+        }
+
+        // 5. Invalid values (0, negative, non-numeric): safe fallback to documented default
+        return 10080;
+    })(),
 
     /*
     |--------------------------------------------------------------------------

@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useMemo, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import ConfirmLogoutModal from '@/components/ConfirmLogoutModal';
 import { useLanguage } from '@/components/LanguageContext';
 import { useTheme } from '@/components/ThemeContext';
 import { getCurrentUser, logoutUser, User, getStoredToken } from '@/lib/api/auth';
@@ -109,6 +110,7 @@ function FindServiceContent() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Data States
   const [services, setServices] = useState<Service[]>([]);
@@ -409,7 +411,7 @@ function FindServiceContent() {
             <button
               id="sidebarSignOutBtn"
               type="button"
-              onClick={handleLogout}
+              onClick={() => setShowLogoutModal(true)}
               disabled={loggingOut}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-error hover:bg-error-container/40 dark:hover:bg-error/20 transition-colors duration-150 focus:outline-none cursor-pointer disabled:opacity-50"
             >
@@ -602,26 +604,6 @@ function FindServiceContent() {
           {/* RESULTS CANVAS (Loading / Error / Empty / Provider Cards)       */}
           {/* ============================================================== */}
           <div id="resultsCanvas">
-            {/* Active search filter badge */}
-            {searchQuery.trim() && !dataLoading && (
-              <div className="flex items-center gap-2 mb-4 p-3 rounded-xl bg-primary-container/10 border border-primary-container/20 text-on-surface dark:text-inverse-on-surface">
-                <span className="material-symbols-outlined text-[20px] text-primary-container">
-                  search
-                </span>
-                <span className="text-body-sm font-medium">
-                  {t.searchResultsFor} <strong className="font-bold text-primary-container dark:text-inverse-primary">"{searchQuery}"</strong> ({filteredProviders.length} {t.showingSuffix})
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="ml-auto text-xs font-bold text-primary-container dark:text-inverse-primary hover:underline flex items-center gap-1 cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-[16px]">close</span>
-                  <span>{t.searchClearBtn}</span>
-                </button>
-              </div>
-            )}
-
             {/* 1. LOADING SKELETON STATE */}
             {dataLoading && (
               <div id="loadingView" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -942,6 +924,14 @@ function FindServiceContent() {
           </div>
         </div>
       </footer>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmLogoutModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleLogout}
+        loading={loggingOut}
+      />
     </div>
   );
 }

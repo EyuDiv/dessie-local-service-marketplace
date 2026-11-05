@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/auth/Header';
 import Footer from '@/components/auth/Footer';
+import ConfirmLogoutModal from '@/components/ConfirmLogoutModal';
 import { useLanguage } from '@/components/LanguageContext';
 import { getCurrentUser, logoutUser, User, getStoredToken } from '@/lib/api/auth';
 import {
@@ -22,6 +23,7 @@ export default function AdminDashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Providers state
   const [providers, setProviders] = useState<AdminProviderItem[]>([]);
@@ -229,7 +231,7 @@ export default function AdminDashboardPage() {
               <p className="text-xs text-outline dark:text-inverse-on-surface/75">{user?.email}</p>
             </div>
             <button
-              onClick={handleLogout}
+              onClick={() => setShowLogoutModal(true)}
               disabled={loggingOut}
               className="px-3.5 py-1.5 rounded-lg bg-surface-container-high dark:bg-surface-dim hover:bg-error hover:text-white dark:hover:bg-error text-on-surface dark:text-inverse-on-surface text-label-md font-label-md transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
             >
@@ -677,6 +679,14 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmLogoutModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleLogout}
+        loading={loggingOut}
+      />
 
       <Footer />
     </div>

@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useMemo, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import ConfirmLogoutModal from '@/components/ConfirmLogoutModal';
 import { useLanguage } from '@/components/LanguageContext';
 import { useTheme } from '@/components/ThemeContext';
 import { getCurrentUser, logoutUser, User, getStoredToken } from '@/lib/api/auth';
@@ -40,6 +41,7 @@ function CreateRequestContent() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Provider & Service Data
   const [provider, setProvider] = useState<Provider | null>(null);
@@ -336,11 +338,10 @@ function CreateRequestContent() {
               id="langBtnEn"
               type="button"
               onClick={() => setLang('en')}
-              className={`px-2.5 py-0.5 rounded-full text-label-md font-label-md transition-all duration-150 cursor-pointer ${
-                lang === 'en'
+              className={`px-2.5 py-0.5 rounded-full text-label-md font-label-md transition-all duration-150 cursor-pointer ${lang === 'en'
                   ? 'font-semibold bg-primary-container text-white shadow-xs'
                   : 'font-medium text-on-surface-variant dark:text-outline-variant hover:text-on-surface dark:hover:text-inverse-on-surface'
-              }`}
+                }`}
             >
               EN
             </button>
@@ -348,11 +349,10 @@ function CreateRequestContent() {
               id="langBtnAm"
               type="button"
               onClick={() => setLang('am')}
-              className={`px-2.5 py-0.5 rounded-full text-label-md font-label-md transition-all duration-150 cursor-pointer ${
-                lang === 'am'
+              className={`px-2.5 py-0.5 rounded-full text-label-md font-label-md transition-all duration-150 cursor-pointer ${lang === 'am'
                   ? 'font-semibold bg-primary-container text-white shadow-xs'
                   : 'font-medium text-on-surface-variant dark:text-outline-variant hover:text-on-surface dark:hover:text-inverse-on-surface'
-              }`}
+                }`}
             >
               አማ
             </button>
@@ -448,7 +448,7 @@ function CreateRequestContent() {
             <button
               id="sidebarSignOutBtn"
               type="button"
-              onClick={handleLogout}
+              onClick={() => setShowLogoutModal(true)}
               disabled={loggingOut}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-error hover:bg-error-container/40 dark:hover:bg-error/20 transition-colors duration-150 focus:outline-none cursor-pointer disabled:opacity-50"
             >
@@ -780,11 +780,10 @@ function CreateRequestContent() {
                               }
                             }}
                             placeholder={t.phWorkDescription}
-                            className={`w-full rounded-lg border p-3.5 text-body-md font-body-md transition-colors text-on-surface dark:text-inverse-on-surface bg-surface-container-lowest dark:bg-surface-dim/40 placeholder:text-outline-variant resize-y focus:outline-none focus:ring-2 ${
-                              fieldErrors.description
+                            className={`w-full rounded-lg border p-3.5 text-body-md font-body-md transition-colors text-on-surface dark:text-inverse-on-surface bg-surface-container-lowest dark:bg-surface-dim/40 placeholder:text-outline-variant resize-y focus:outline-none focus:ring-2 ${fieldErrors.description
                                 ? 'border-error focus:border-error focus:ring-error/20'
                                 : 'border-outline-variant/50 focus:border-primary-container focus:ring-primary-container/20'
-                            }`}
+                              }`}
                           />
                         </div>
                         <p className="mt-1.5 font-label-md text-label-md text-on-surface-variant dark:text-outline-variant flex items-center gap-1">
@@ -829,11 +828,10 @@ function CreateRequestContent() {
                               }
                             }}
                             placeholder={t.phServiceLocation}
-                            className={`w-full pl-11 pr-4 py-3 rounded-lg border font-body-md transition-colors text-on-surface dark:text-inverse-on-surface bg-surface-container-lowest dark:bg-surface-dim/40 placeholder:text-outline-variant focus:outline-none focus:ring-2 ${
-                              fieldErrors.location
+                            className={`w-full pl-11 pr-4 py-3 rounded-lg border font-body-md transition-colors text-on-surface dark:text-inverse-on-surface bg-surface-container-lowest dark:bg-surface-dim/40 placeholder:text-outline-variant focus:outline-none focus:ring-2 ${fieldErrors.location
                                 ? 'border-error focus:border-error focus:ring-error/20'
                                 : 'border-outline-variant/50 focus:border-primary-container focus:ring-primary-container/20'
-                            }`}
+                              }`}
                           />
                         </div>
                         <p className="mt-1.5 font-label-md text-label-md text-on-surface-variant dark:text-outline-variant flex items-center gap-1">
@@ -880,11 +878,10 @@ function CreateRequestContent() {
                                   setFieldErrors((prev) => ({ ...prev, requested_date: undefined }));
                                 }
                               }}
-                              className={`w-full pl-11 pr-4 py-3 rounded-lg border font-body-md transition-colors text-on-surface dark:text-inverse-on-surface bg-surface-container-lowest dark:bg-surface-dim/40 placeholder:text-outline-variant focus:outline-none focus:ring-2 ${
-                                fieldErrors.requested_date
+                              className={`w-full pl-11 pr-4 py-3 rounded-lg border font-body-md transition-colors text-on-surface dark:text-inverse-on-surface bg-surface-container-lowest dark:bg-surface-dim/40 placeholder:text-outline-variant focus:outline-none focus:ring-2 ${fieldErrors.requested_date
                                   ? 'border-error focus:border-error focus:ring-error/20'
                                   : 'border-outline-variant/50 focus:border-primary-container focus:ring-primary-container/20'
-                              }`}
+                                }`}
                             />
                           </div>
                           {fieldErrors.requested_date && (
@@ -924,11 +921,10 @@ function CreateRequestContent() {
                                   setFieldErrors((prev) => ({ ...prev, requested_time: undefined }));
                                 }
                               }}
-                              className={`w-full pl-11 pr-4 py-3 rounded-lg border font-body-md transition-colors text-on-surface dark:text-inverse-on-surface bg-surface-container-lowest dark:bg-surface-dim/40 placeholder:text-outline-variant focus:outline-none focus:ring-2 ${
-                                fieldErrors.requested_time
+                              className={`w-full pl-11 pr-4 py-3 rounded-lg border font-body-md transition-colors text-on-surface dark:text-inverse-on-surface bg-surface-container-lowest dark:bg-surface-dim/40 placeholder:text-outline-variant focus:outline-none focus:ring-2 ${fieldErrors.requested_time
                                   ? 'border-error focus:border-error focus:ring-error/20'
                                   : 'border-outline-variant/50 focus:border-primary-container focus:ring-primary-container/20'
-                              }`}
+                                }`}
                             />
                           </div>
                           {fieldErrors.requested_time && (
@@ -1048,6 +1044,14 @@ function CreateRequestContent() {
           <span className="font-label-sm text-label-sm mt-0.5">{t.navProfile}</span>
         </div>
       </nav>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmLogoutModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleLogout}
+        loading={loggingOut}
+      />
     </div>
   );
 }

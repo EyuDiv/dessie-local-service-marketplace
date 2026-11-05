@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/auth/Header';
 import Footer from '@/components/auth/Footer';
+import ConfirmLogoutModal from '@/components/ConfirmLogoutModal';
 import { useLanguage } from '@/components/LanguageContext';
 import { getCurrentUser, logoutUser, User, getStoredToken } from '@/lib/api/auth';
 import { getCustomerRequests, ServiceRequestItem } from '@/lib/api/requests';
@@ -24,6 +25,7 @@ export default function CustomerDashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Live Data
   const [requests, setRequests] = useState<ServiceRequestItem[]>([]);
@@ -141,7 +143,7 @@ export default function CustomerDashboardPage() {
               </div>
 
               <button
-                onClick={handleLogout}
+                onClick={() => setShowLogoutModal(true)}
                 disabled={loggingOut}
                 title={t.btnLogout}
                 className="p-2 rounded-lg hover:bg-error hover:text-white text-on-surface dark:text-inverse-on-surface transition-colors cursor-pointer disabled:opacity-50"
@@ -449,6 +451,15 @@ export default function CustomerDashboardPage() {
           )}
         </div>
       </main>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmLogoutModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleLogout}
+        loading={loggingOut}
+      />
+
       <Footer />
     </div>
   );

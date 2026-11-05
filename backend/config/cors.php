@@ -19,7 +19,23 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    'allowed_origins' => (function () {
+        $isProduction = strtolower(trim((string) env('APP_ENV', 'local'))) === 'production';
+        $rawOrigins = env('CORS_ALLOWED_ORIGINS');
+        $trimmed = trim((string) $rawOrigins);
+
+        if ($trimmed !== '') {
+            return array_values(array_filter(array_map('trim', explode(',', $rawOrigins))));
+        }
+
+        // In production, fail-closed: never silently allow wildcard '*'
+        if ($isProduction) {
+            return [];
+        }
+
+        // Non-production (local/development/testing): allow wildcard for developer convenience
+        return ['*'];
+    })(),
 
     'allowed_origins_patterns' => [],
 

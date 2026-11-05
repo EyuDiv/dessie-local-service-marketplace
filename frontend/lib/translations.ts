@@ -148,6 +148,9 @@ export interface Translations {
   dashboardEmail: string;
   btnLogout: string;
   btnLogoutLoading: string;
+  confirmLogoutTitle: string;
+  confirmLogoutMessage: string;
+  btnConfirmLogout: string;
   navDashboard: string;
   navFindService: string;
   navMyRequests: string;
@@ -432,6 +435,9 @@ export const translations: Record<Language, Translations> = {
     dashboardEmail: "Email",
     btnLogout: "Logout",
     btnLogoutLoading: "Logging out...",
+    confirmLogoutTitle: "Confirm Logout",
+    confirmLogoutMessage: "Are you sure you want to log out of your account?",
+    btnConfirmLogout: "Yes, Log Out",
     navDashboard: "Dashboard",
     navFindService: "Find a Service",
     navMyRequests: "My Requests",
@@ -714,6 +720,9 @@ export const translations: Record<Language, Translations> = {
     dashboardEmail: "ኢሜይል",
     btnLogout: "ውጣ",
     btnLogoutLoading: "በመውጣት ላይ...",
+    confirmLogoutTitle: "መውጣትዎን ያረጋግጡ",
+    confirmLogoutMessage: "እርግጠኛ ነዎት ከመለያዎ መውጣት ይፈልጋሉ?",
+    btnConfirmLogout: "አዎ፣ ውጣ",
     navDashboard: "ዳሽቦርድ",
     navFindService: "አገልግሎት ይፈልጉ",
     navMyRequests: "ጥያቄዎቼ",

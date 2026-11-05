@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -50,12 +51,25 @@ class AuthController extends Controller
 
             // If the registered user is a provider, create their initial provider profile
             if ($user->isProvider()) {
+                $privateDisk = config('filesystems.private_disk', 'local');
+
                 if ($request->hasFile('cv')) {
                     $cvFile = $request->file('cv');
                     $cvOriginalName = $cvFile->getClientOriginalName();
                     // Generate safe random filename; never trust client-supplied filename or path
                     $cvFilename = Str::random(40) . '.pdf';
-                    $cvPath = $cvFile->storeAs('cvs', $cvFilename, 'local');
+
+                    try {
+                        $cvPath = $cvFile->storeAs('cvs', $cvFilename, $privateDisk);
+                    } catch (\Throwable $storageEx) {
+                        Log::error('CV upload to storage failed during registration: ' . $storageEx->getMessage());
+                        throw new \RuntimeException('Failed to upload CV to storage.', 0, $storageEx);
+                    }
+
+                    if (! $cvPath || ! is_string($cvPath)) {
+                        Log::error('CV upload to storage returned false or empty path during registration.');
+                        throw new \RuntimeException('Failed to upload CV to storage.');
+                    }
                 }
 
                 if ($request->hasFile('certificate')) {
@@ -66,7 +80,18 @@ class AuthController extends Controller
                         $certExt = 'pdf';
                     }
                     $certFilename = Str::random(40) . '.' . $certExt;
-                    $certPath = $certFile->storeAs('certificates', $certFilename, 'local');
+
+                    try {
+                        $certPath = $certFile->storeAs('certificates', $certFilename, $privateDisk);
+                    } catch (\Throwable $storageEx) {
+                        Log::error('Certificate upload to storage failed during registration: ' . $storageEx->getMessage());
+                        throw new \RuntimeException('Failed to upload certificate to storage.', 0, $storageEx);
+                    }
+
+                    if (! $certPath || ! is_string($certPath)) {
+                        Log::error('Certificate upload to storage returned false or empty path during registration.');
+                        throw new \RuntimeException('Failed to upload certificate to storage.');
+                    }
                 }
 
                 $user->providerProfile()->create([
@@ -98,14 +123,35 @@ class AuthController extends Controller
             DB::rollBack();
 
             // Clean up any uploaded files if registration transaction fails
-            if ($cvPath && Storage::disk('local')->exists($cvPath)) {
-                Storage::disk('local')->delete($cvPath);
+            $cleanupDisk = config('filesystems.private_disk', 'local');
+            if ($cvPath && is_string($cvPath)) {
+                try {
+                    if (Storage::disk($cleanupDisk)->exists($cvPath)) {
+                        Storage::disk($cleanupDisk)->delete($cvPath);
+                    }
+                } catch (\Throwable $cleanupEx) {
+                    Log::warning('Failed to cleanup CV after failed registration: ' . $cleanupEx->getMessage());
+                }
             }
-            if ($certPath && Storage::disk('local')->exists($certPath)) {
-                Storage::disk('local')->delete($certPath);
+            if ($certPath && is_string($certPath)) {
+                try {
+                    if (Storage::disk($cleanupDisk)->exists($certPath)) {
+                        Storage::disk($cleanupDisk)->delete($certPath);
+                    }
+                } catch (\Throwable $cleanupEx) {
+                    Log::warning('Failed to cleanup certificate after failed registration: ' . $cleanupEx->getMessage());
+                }
             }
 
-            throw $e;
+            Log::error('Registration transaction failed: ' . $e->getMessage());
+
+            $clientMessage = $e instanceof \RuntimeException
+                ? $e->getMessage()
+                : 'Registration failed due to an error. Please try again.';
+
+            return response()->json([
+                'message' => $clientMessage,
+            ], 500);
         }
     }
 

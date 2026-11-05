@@ -6,6 +6,7 @@ use App\Models\ProviderProfile;
 use App\Models\Service;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -42,25 +43,73 @@ class ProviderController extends Controller
             ], 404);
         }
 
+        // 1. Validate the incoming CV
         $request->validate([
             'cv' => ['required', 'file', 'mimes:pdf', 'max:5120'], // Max 5MB PDF
         ]);
 
+        $privateDisk = config('filesystems.private_disk', 'local');
         $file = $request->file('cv');
         $originalName = $file->getClientOriginalName();
         $randomFilename = Str::random(40) . '.pdf';
-        $newPath = $file->storeAs('cvs', $randomFilename, 'local');
 
-        // Delete old CV file if present to avoid storage clutter
-        if ($profile->cv_path && Storage::disk('local')->exists($profile->cv_path)) {
-            Storage::disk('local')->delete($profile->cv_path);
+        // 2. Upload the new CV to the configured private disk
+        $newPath = null;
+        try {
+            $newPath = $file->storeAs('cvs', $randomFilename, $privateDisk);
+        } catch (\Throwable $storageEx) {
+            Log::error('Failed to store new CV file to storage: ' . $storageEx->getMessage());
+            return response()->json([
+                'message' => 'Failed to store document in storage. Please try again.',
+            ], 500);
         }
 
-        $profile->update([
-            'cv_path' => $newPath,
-            'cv_original_name' => $originalName,
-            'verification_status' => 'pending', // Re-trigger review upon document update
-        ]);
+        // 3. Confirm that upload succeeded and a valid path was returned
+        // 4. If upload fails, return appropriate error; old CV and database path remain untouched
+        if (! $newPath || ! is_string($newPath)) {
+            Log::error('Storage driver returned false or non-string path for uploaded CV.');
+            return response()->json([
+                'message' => 'Failed to store document in storage. Please try again.',
+            ], 500);
+        }
+
+        $oldPath = $profile->cv_path;
+
+        // 5. Update the database with the new path only after successful upload
+        try {
+            $profile->update([
+                'cv_path' => $newPath,
+                'cv_original_name' => $originalName,
+                'verification_status' => 'pending', // Re-trigger review upon document update
+            ]);
+        } catch (\Throwable $dbEx) {
+            Log::error('Database update failed after CV upload: ' . $dbEx->getMessage());
+
+            // 7. If database update fails, clean up newly uploaded file and preserve old file
+            try {
+                if (Storage::disk($privateDisk)->exists($newPath)) {
+                    Storage::disk($privateDisk)->delete($newPath);
+                }
+            } catch (\Throwable $cleanupEx) {
+                Log::warning('Failed to clean up newly uploaded CV after DB failure: ' . $cleanupEx->getMessage());
+            }
+
+            return response()->json([
+                'message' => 'Failed to save document profile details. Please try again.',
+            ], 500);
+        }
+
+        // 6. Delete previous CV only after the database update succeeds
+        if ($oldPath && is_string($oldPath) && $oldPath !== $newPath) {
+            try {
+                if (Storage::disk($privateDisk)->exists($oldPath)) {
+                    Storage::disk($privateDisk)->delete($oldPath);
+                }
+            } catch (\Throwable $deleteEx) {
+                // 8. If deleting old file fails, log safely; old file deletion failure does not invalidate upload
+                Log::warning('Failed to delete previous CV file (' . $oldPath . ') from private storage: ' . $deleteEx->getMessage());
+            }
+        }
 
         return response()->json([
             'message' => 'CV uploaded successfully.',

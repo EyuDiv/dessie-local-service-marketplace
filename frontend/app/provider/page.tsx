@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/auth/Header';
 import Footer from '@/components/auth/Footer';
+import ConfirmLogoutModal from '@/components/ConfirmLogoutModal';
 import { useLanguage } from '@/components/LanguageContext';
 import { getCurrentUser, logoutUser, User, getStoredToken, uploadProviderCv } from '@/lib/api/auth';
 import {
@@ -31,6 +32,7 @@ export default function ProviderDashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Provider Data
   const [requests, setRequests] = useState<ServiceRequestItem[]>([]);
@@ -341,7 +343,7 @@ export default function ProviderDashboardPage() {
               </div>
 
               <button
-                onClick={handleLogout}
+                onClick={() => setShowLogoutModal(true)}
                 disabled={loggingOut}
                 title={t.btnLogout}
                 className="px-3 py-2 rounded-xl bg-surface-container-high dark:bg-surface-dim hover:bg-error hover:text-white dark:hover:bg-error text-on-surface dark:text-inverse-on-surface text-xs font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
@@ -904,6 +906,14 @@ export default function ProviderDashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmLogoutModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleLogout}
+        loading={loggingOut}
+      />
 
       <Footer />
     </div>
