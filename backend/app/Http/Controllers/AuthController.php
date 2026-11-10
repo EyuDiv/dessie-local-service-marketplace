@@ -19,6 +19,10 @@ class AuthController extends Controller
      */
     public function register(Request $request): JsonResponse
     {
+        if ($limitResponse = $this->checkPhpUploadLimit($request, ['cv', 'certificate'])) {
+            return $limitResponse;
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
@@ -47,6 +51,8 @@ class AuthController extends Controller
                 'phone' => $validated['phone'],
                 'password' => Hash::make($validated['password']),
                 'role' => $validated['role'],
+                'status' => 'active',
+                'last_login_at' => now(),
             ]);
 
             // If the registered user is a provider, create their initial provider profile
@@ -173,6 +179,14 @@ class AuthController extends Controller
             ], 401);
         }
 
+        if ($user->isSuspended()) {
+            return response()->json([
+                'message' => 'Your account has been suspended. Please contact support.',
+            ], 403);
+        }
+
+        $user->forceFill(['last_login_at' => now()])->save();
+
         if ($user->isProvider()) {
             $user->load('providerProfile');
         }
@@ -204,6 +218,12 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         $user = $request->user();
+
+        if ($user->isSuspended()) {
+            return response()->json([
+                'message' => 'Your account has been suspended.',
+            ], 403);
+        }
 
         if ($user->isProvider()) {
             $user->load('providerProfile');

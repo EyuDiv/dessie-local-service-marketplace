@@ -1,9 +1,13 @@
 <?php
 
+use App\Http\Controllers\AdminComplaintController;
+use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminProviderController;
 use App\Http\Controllers\AdminRequestController;
 use App\Http\Controllers\AdminReviewController;
+use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\ProviderController;
 use App\Http\Controllers\ProviderRequestController;
 use App\Http\Controllers\ProviderReviewController;
@@ -39,6 +43,7 @@ Route::get('/providers/{provider}/reviews', [ReviewController::class, 'publicPro
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::post('/complaints', [ComplaintController::class, 'store']);
 
     /*
     |----------------------------------------------------------------------
@@ -110,6 +115,17 @@ Route::middleware('auth:sanctum')->group(function () {
         // Service Requests Oversight
         Route::get('/admin/requests', [AdminRequestController::class, 'index']);
         Route::get('/admin/requests/{request}', [AdminRequestController::class, 'show']);
+
+        // Admin Overview & Analytics
+        Route::get('/admin/dashboard-stats', [AdminDashboardController::class, 'stats']);
+
+        // User Management
+        Route::get('/admin/users', [AdminUserController::class, 'index']);
+        Route::patch('/admin/users/{id}/status', [AdminUserController::class, 'updateStatus']);
+
+        // Complaints & Support Disputes
+        Route::get('/admin/complaints', [AdminComplaintController::class, 'index']);
+        Route::patch('/admin/complaints/{id}', [AdminComplaintController::class, 'update']);
 
         // Reviews Oversight (Read-Only)
         Route::get('/admin/reviews', [AdminReviewController::class, 'index']);

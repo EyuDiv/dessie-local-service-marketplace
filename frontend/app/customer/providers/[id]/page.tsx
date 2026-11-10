@@ -173,21 +173,21 @@ export default function ProviderProfilePage() {
       {/* ============================================================== */}
       {/* TOP APP BAR (Dessie Service Header)                             */}
       {/* ============================================================== */}
-      <header className="bg-surface-container-lowest dark:bg-inverse-surface border-b border-outline-variant/30 dark:border-outline/20 shadow-sm dark:shadow-none top-0 sticky z-40 w-full px-margin-mobile md:px-margin flex justify-between items-center h-16 transition-colors duration-200">
-        <div className="flex items-center gap-3">
-          <Link href="/customer" className="flex items-center gap-3 focus:outline-none">
-            <div className="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center text-white font-bold shadow-sm">
-              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
+      <header className="bg-surface-container-lowest dark:bg-inverse-surface border-b border-outline-variant/30 dark:border-outline/20 shadow-sm dark:shadow-none top-0 sticky z-40 w-full px-3 sm:px-margin-mobile md:px-margin flex justify-between items-center h-14 sm:h-16 transition-colors duration-200">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Link href="/customer" className="flex items-center gap-2 sm:gap-3 focus:outline-none min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary-container flex items-center justify-center text-white font-bold shadow-sm shrink-0">
+              <span className="material-symbols-outlined text-[20px] sm:text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>
                 handshake
               </span>
             </div>
-            <div>
-              <div className="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary leading-none">
+            <div className="min-w-0">
+              <div className="text-sm sm:text-headline-md font-bold text-primary dark:text-inverse-primary leading-none truncate">
                 {t.brandTitle}
               </div>
               <div className="flex items-center gap-1 mt-0.5">
-                <span className="material-symbols-outlined text-outline text-[14px]">location_on</span>
-                <span className="font-label-sm text-label-sm text-outline dark:text-outline-variant">
+                <span className="material-symbols-outlined text-outline text-[12px] sm:text-[14px]">location_on</span>
+                <span className="text-[11px] sm:text-label-sm font-label-sm text-outline dark:text-outline-variant truncate">
                   {t.locationTag}
                 </span>
               </div>
@@ -196,14 +196,14 @@ export default function ProviderProfilePage() {
         </div>
 
         {/* Header Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {/* Language Toggle EN | አማ */}
-          <div className="inline-flex items-center p-1 rounded-full border border-outline-variant/50 bg-surface-container-low dark:bg-surface-dim shadow-sm">
+          <div className="inline-flex items-center p-0.5 sm:p-1 rounded-full border border-outline-variant/50 bg-surface-container-low dark:bg-surface-dim shadow-sm">
             <button
               id="langBtnEn"
               type="button"
               onClick={() => setLang('en')}
-              className={`px-2.5 py-0.5 rounded-full text-label-md font-label-md transition-all duration-150 cursor-pointer ${
+              className={`px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs sm:text-label-md font-label-md transition-all duration-150 cursor-pointer ${
                 lang === 'en'
                   ? 'font-semibold bg-primary-container text-white shadow-xs'
                   : 'font-medium text-on-surface-variant dark:text-outline-variant hover:text-on-surface dark:hover:text-inverse-on-surface'
@@ -215,7 +215,7 @@ export default function ProviderProfilePage() {
               id="langBtnAm"
               type="button"
               onClick={() => setLang('am')}
-              className={`px-2.5 py-0.5 rounded-full text-label-md font-label-md transition-all duration-150 cursor-pointer ${
+              className={`px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs sm:text-label-md font-label-md transition-all duration-150 cursor-pointer ${
                 lang === 'am'
                   ? 'font-semibold bg-primary-container text-white shadow-xs'
                   : 'font-medium text-on-surface-variant dark:text-outline-variant hover:text-on-surface dark:hover:text-inverse-on-surface'
@@ -231,9 +231,9 @@ export default function ProviderProfilePage() {
             type="button"
             aria-label="Toggle theme"
             onClick={toggleTheme}
-            className="w-10 h-10 rounded-lg border border-outline-variant/60 dark:border-outline/40 flex items-center justify-center text-on-surface-variant dark:text-outline-variant hover:bg-surface-container dark:hover:bg-surface-dim hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150 focus:outline-none cursor-pointer"
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg border border-outline-variant/60 dark:border-outline/40 flex items-center justify-center text-on-surface-variant dark:text-outline-variant hover:bg-surface-container dark:hover:bg-surface-dim hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150 focus:outline-none cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[20px]">
+            <span className="material-symbols-outlined text-[18px] sm:text-[20px]">
               {theme === 'dark' ? 'light_mode' : 'dark_mode'}
             </span>
           </button>
@@ -331,13 +331,13 @@ export default function ProviderProfilePage() {
         {/* ============================================================== */}
         {/* MAIN CONTENT CANVAS                                             */}
         {/* ============================================================== */}
-        <main className="flex-1 px-4 sm:px-6 md:px-margin py-8 max-w-7xl mx-auto w-full pb-28 md:pb-8">
+        <main className="flex-1 px-3 sm:px-6 md:px-margin py-4 sm:py-8 max-w-7xl mx-auto w-full pb-36 md:pb-8">
           {/* Breadcrumb Navigation back to Services List */}
-          <nav className="mb-6 flex items-center justify-between">
+          <nav className="mb-3.5 sm:mb-6 flex items-center justify-between">
             <Link
               id="breadcrumbBackBtn"
               href="/customer/services"
-              className="inline-flex items-center gap-2 text-on-surface-variant dark:text-outline-variant hover:text-primary-container dark:hover:text-inverse-primary font-label-lg text-label-lg transition-colors duration-150 group"
+              className="inline-flex items-center gap-1.5 sm:gap-2 text-on-surface-variant dark:text-outline-variant hover:text-primary-container dark:hover:text-inverse-primary text-xs sm:text-label-lg font-medium transition-colors duration-150 group"
             >
               <span className="material-symbols-outlined text-[20px] transition-transform group-hover:-translate-x-1">
                 arrow_back
@@ -457,26 +457,26 @@ export default function ProviderProfilePage() {
               {/* PRIMARY CONTENT COLUMN (8 COLUMNS ON DESKTOP) */}
               <div className="lg:col-span-8 space-y-6">
                 {/* 1. Provider Identity Header Card */}
-                <article className="bg-surface-container-lowest dark:bg-inverse-surface rounded-xl p-6 md:p-8 border border-outline-variant/30 shadow-sm relative overflow-hidden">
+                <article className="bg-surface-container-lowest dark:bg-inverse-surface rounded-xl p-4 sm:p-6 md:p-8 border border-outline-variant/30 shadow-sm relative overflow-hidden">
                   {/* Decorative top accent line */}
                   <div className="absolute top-0 left-0 right-0 h-1.5 bg-primary-container" />
 
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                  <div className="flex items-start sm:items-center gap-3.5 sm:gap-6">
                     {/* Provider Avatar initials */}
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-primary-container/15 dark:bg-primary-container/25 border-2 border-primary-container/20 flex items-center justify-center text-primary-container dark:text-inverse-primary font-bold text-2xl sm:text-3xl font-headline-lg shrink-0 shadow-sm">
+                    <div className="w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl bg-primary-container/15 dark:bg-primary-container/25 border-2 border-primary-container/20 flex items-center justify-center text-primary-container dark:text-inverse-primary font-bold text-lg sm:text-2xl md:text-3xl font-headline-lg shrink-0 shadow-sm">
                       <span>{providerInitials}</span>
                     </div>
 
                     {/* Provider Details */}
-                    <div className="flex-1 space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                         {/* Verification Badge */}
                         {provider.verification_status === 'verified' && (
                           <span
                             id="profileBadgeVerified"
-                            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-container/10 text-primary-container dark:text-inverse-primary border border-primary-container/20"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-2xs sm:text-xs font-semibold bg-primary-container/10 text-primary-container dark:text-inverse-primary border border-primary-container/20"
                           >
-                            <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                            <span className="material-symbols-outlined text-[13px] sm:text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>
                               verified
                             </span>
                             <span>{t.badgeVerified}</span>
@@ -487,27 +487,27 @@ export default function ProviderProfilePage() {
                         {provider.availability_status === 'available' && (
                           <span
                             id="profileBadgeAvailability"
-                            className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-container/10 text-primary-container dark:text-inverse-primary border border-primary-container/20"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-2xs sm:text-xs font-semibold bg-primary-container/10 text-primary-container dark:text-inverse-primary border border-primary-container/20"
                           >
-                            <span className="w-2 h-2 rounded-full bg-primary-container animate-pulse" />
+                            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary-container animate-pulse" />
                             <span>{t.statusAvailable}</span>
                           </span>
                         )}
                         {provider.availability_status === 'busy' && (
                           <span
                             id="profileBadgeAvailability"
-                            className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-secondary/10 text-secondary border border-secondary/20"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-2xs sm:text-xs font-semibold bg-secondary/10 text-secondary border border-secondary/20"
                           >
-                            <span className="w-2 h-2 rounded-full bg-secondary" />
+                            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-secondary" />
                             <span>{t.statusBusy}</span>
                           </span>
                         )}
                         {provider.availability_status === 'offline' && (
                           <span
                             id="profileBadgeAvailability"
-                            className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container dark:bg-surface-dim text-outline border border-outline-variant/30"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-2xs sm:text-xs font-semibold bg-surface-container dark:bg-surface-dim text-outline border border-outline-variant/30"
                           >
-                            <span className="w-2 h-2 rounded-full bg-outline" />
+                            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-outline" />
                             <span>{t.statusOffline}</span>
                           </span>
                         )}
@@ -516,9 +516,9 @@ export default function ProviderProfilePage() {
                         {provider.experience_years > 0 && (
                           <span
                             id="profileBadgeExp"
-                            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-surface-container dark:bg-surface-dim text-on-surface-variant dark:text-outline-variant border border-outline-variant/30"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-2xs sm:text-xs font-medium bg-surface-container dark:bg-surface-dim text-on-surface-variant dark:text-outline-variant border border-outline-variant/30"
                           >
-                            <span className="material-symbols-outlined text-[14px]">workspace_premium</span>
+                            <span className="material-symbols-outlined text-[13px] sm:text-[14px]">workspace_premium</span>
                             <span>
                               {provider.experience_years} {t.yearsExperience}
                             </span>
@@ -529,22 +529,22 @@ export default function ProviderProfilePage() {
                       {/* Business Name */}
                       <h1
                         id="profileBusinessName"
-                        className="font-headline-lg text-headline-lg font-bold text-on-surface dark:text-inverse-on-surface tracking-tight"
+                        className="font-headline-lg text-lg sm:text-2xl md:text-headline-lg font-bold text-on-surface dark:text-inverse-on-surface tracking-tight leading-snug break-words"
                       >
                         {provider.business_name}
                       </h1>
 
                       {/* Location & Contact Phone */}
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-on-surface-variant dark:text-outline-variant font-label-lg text-label-lg">
+                      <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1 text-on-surface-variant dark:text-outline-variant text-xs sm:text-label-lg font-medium">
                         <div className="flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[18px] text-secondary">
+                          <span className="material-symbols-outlined text-[15px] sm:text-[18px] text-secondary">
                             location_on
                           </span>
                           <span id="profileLocation">{provider.location}, Dessie</span>
                         </div>
                         {provider.phone && (
                           <div className="flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[18px] text-primary-container dark:text-inverse-primary">
+                            <span className="material-symbols-outlined text-[15px] sm:text-[18px] text-primary-container dark:text-inverse-primary">
                               call
                             </span>
                             <a
@@ -564,7 +564,7 @@ export default function ProviderProfilePage() {
                 {/* 2. About this Provider Card */}
                 <section
                   id="profileAboutSection"
-                  className="bg-surface-container-lowest dark:bg-inverse-surface rounded-xl p-6 md:p-8 border border-outline-variant/30 shadow-sm space-y-4"
+                  className="bg-surface-container-lowest dark:bg-inverse-surface rounded-xl p-4 sm:p-6 md:p-8 border border-outline-variant/30 shadow-sm space-y-4"
                 >
                   <div className="flex items-center gap-2 border-b border-outline-variant/20 pb-3">
                     <span className="material-symbols-outlined text-primary-container dark:text-inverse-primary text-xl">
@@ -610,7 +610,7 @@ export default function ProviderProfilePage() {
                 {/* 3. Services Offered Card */}
                 <section
                   id="profileServicesSection"
-                  className="bg-surface-container-lowest dark:bg-inverse-surface rounded-xl p-6 md:p-8 border border-outline-variant/30 shadow-sm space-y-4"
+                  className="bg-surface-container-lowest dark:bg-inverse-surface rounded-xl p-4 sm:p-6 md:p-8 border border-outline-variant/30 shadow-sm space-y-4"
                 >
                   <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
                     <div className="flex items-center gap-2">
@@ -657,7 +657,7 @@ export default function ProviderProfilePage() {
                 {/* 4. Customer Reviews Card (GET /api/providers/{provider}/reviews) */}
                 <section
                   id="profileReviewsSection"
-                  className="bg-surface-container-lowest dark:bg-inverse-surface rounded-xl p-6 md:p-8 border border-outline-variant/30 shadow-sm space-y-6"
+                  className="bg-surface-container-lowest dark:bg-inverse-surface rounded-xl p-4 sm:p-6 md:p-8 border border-outline-variant/30 shadow-sm space-y-4 sm:space-y-6"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-outline-variant/20 pb-4">
                     <div>
@@ -926,7 +926,7 @@ export default function ProviderProfilePage() {
       {/* ============================================================== */}
       <nav
         aria-label="Mobile Navigation"
-        className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-2 h-16 md:hidden bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant/30 dark:border-outline/20 shadow-lg dark:shadow-none"
+        className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-2 h-16 md:hidden bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant/30 dark:border-outline/20 shadow-lg dark:shadow-none pb-[max(0.5rem,env(safe-area-inset-bottom))]"
       >
         {/* Tab 1: Dashboard */}
         <Link

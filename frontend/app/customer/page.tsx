@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/auth/Header';
 import Footer from '@/components/auth/Footer';
 import ConfirmLogoutModal from '@/components/ConfirmLogoutModal';
+import ServiceRequestCard from '@/components/customer/ServiceRequestCard';
 import { useLanguage } from '@/components/LanguageContext';
 import { getCurrentUser, logoutUser, User, getStoredToken } from '@/lib/api/auth';
 import { getCustomerRequests, ServiceRequestItem } from '@/lib/api/requests';
@@ -111,34 +112,34 @@ export default function CustomerDashboardPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background text-on-surface transition-colors duration-200">
       <Header />
-      <main className="flex-1 w-full max-w-7xl mx-auto px-margin-mobile md:px-margin py-space-lg md:py-space-xl space-y-space-lg">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-margin-mobile md:px-margin py-4 sm:py-space-lg md:py-space-xl space-y-4 sm:space-y-space-lg">
         {/* Welcome Hero Banner */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-surface-container-low via-surface-container-lowest to-surface-container-low dark:from-inverse-surface dark:via-[#1c1916] dark:to-inverse-surface rounded-2xl border border-outline-variant/40 shadow-sm p-space-lg md:p-space-xl">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
+        <div className="relative overflow-hidden bg-gradient-to-br from-surface-container-low via-surface-container-lowest to-surface-container-low dark:from-inverse-surface dark:via-[#1c1916] dark:to-inverse-surface rounded-2xl border border-outline-variant/40 shadow-sm p-4 sm:p-space-lg md:p-space-xl">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-6 relative z-10">
             <div className="space-y-2 max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-primary-container/10 text-primary-container dark:bg-primary-container/20 dark:text-inverse-primary border border-primary-container/30">
-                <span className="material-symbols-outlined text-[16px]">verified</span>
+              <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-2xs sm:text-xs font-semibold bg-primary-container/10 text-primary-container dark:bg-primary-container/20 dark:text-inverse-primary border border-primary-container/30">
+                <span className="material-symbols-outlined text-[14px] sm:text-[16px]">verified</span>
                 <span>{lang === 'am' ? 'የደሴ ማዘጋጃ ቤት የአገልግሎት አውታረ መረብ' : 'Dessie Verified Local Marketplace'}</span>
               </div>
-              <h1 className="text-headline-lg font-headline-lg font-extrabold text-on-surface dark:text-white tracking-tight">
+              <h1 className="text-xl sm:text-2xl md:text-headline-lg font-headline-lg font-extrabold text-on-surface dark:text-white tracking-tight">
                 {t.dashWelcome}, {user?.name}!
               </h1>
-              <p className="text-body-md text-on-surface-variant dark:text-inverse-on-surface/90 leading-relaxed">
+              <p className="text-xs sm:text-body-md text-on-surface-variant dark:text-inverse-on-surface/90 leading-relaxed">
                 {t.dashboardCustomerSubtitle}
               </p>
             </div>
 
             {/* Profile Pill & Logout */}
-            <div className="flex items-center gap-3 bg-surface-container-high/60 dark:bg-surface-dim/80 p-2.5 rounded-xl border border-outline-variant/30 backdrop-blur-sm self-stretch md:self-auto justify-between md:justify-start">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-full bg-primary-container/15 text-primary-container dark:bg-primary-container/25 dark:text-inverse-primary flex items-center justify-center font-bold text-base">
+            <div className="flex items-center gap-2.5 sm:gap-3 bg-surface-container-high/60 dark:bg-surface-dim/80 p-2 sm:p-2.5 rounded-xl border border-outline-variant/30 backdrop-blur-sm self-stretch md:self-auto justify-between md:justify-start">
+              <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary-container/15 text-primary-container dark:bg-primary-container/25 dark:text-inverse-primary flex items-center justify-center font-bold text-sm sm:text-base shrink-0">
                   {user?.name?.charAt(0).toUpperCase() || 'C'}
                 </div>
-                <div>
-                  <p className="text-label-md font-bold text-on-surface dark:text-white leading-tight">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-label-md font-bold text-on-surface dark:text-white leading-tight truncate">
                     {user?.name}
                   </p>
-                  <p className="text-xs text-outline dark:text-inverse-on-surface/75">{user?.email}</p>
+                  <p className="text-2xs sm:text-xs text-outline dark:text-inverse-on-surface/75 truncate">{user?.email}</p>
                 </div>
               </div>
 
@@ -146,16 +147,16 @@ export default function CustomerDashboardPage() {
                 onClick={() => setShowLogoutModal(true)}
                 disabled={loggingOut}
                 title={t.btnLogout}
-                className="p-2 rounded-lg hover:bg-error hover:text-white text-on-surface dark:text-inverse-on-surface transition-colors cursor-pointer disabled:opacity-50"
+                className="p-1.5 sm:p-2 rounded-lg hover:bg-error hover:text-white text-on-surface dark:text-inverse-on-surface transition-colors cursor-pointer disabled:opacity-50 shrink-0"
               >
-                <span className="material-symbols-outlined text-[20px]">logout</span>
+                <span className="material-symbols-outlined text-[18px] sm:text-[20px]">logout</span>
               </button>
             </div>
           </div>
 
           {/* Quick Search Bar inside Hero */}
-          <form onSubmit={handleSearchSubmit} className="mt-6 max-w-2xl relative">
-            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline dark:text-inverse-on-surface/70 text-[22px]">
+          <form onSubmit={handleSearchSubmit} className="mt-4 sm:mt-6 max-w-2xl relative">
+            <span className="material-symbols-outlined absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-outline dark:text-inverse-on-surface/70 text-[18px] sm:text-[22px]">
               search
             </span>
             <input
@@ -163,11 +164,11 @@ export default function CustomerDashboardPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={lang === 'am' ? 'የቧንቧ፣ ኤሌክትሪክ ወይም አናጺ አገልግሎት በደሴ ይፈልጉ...' : 'Search plumbers, electricians, carpenters in Dessie...'}
-              className="w-full pl-12 pr-28 py-3.5 rounded-xl bg-surface-container-lowest dark:bg-surface-dim border border-outline-variant/60 dark:border-outline-variant/80 focus:outline-none focus:border-primary-container text-body-sm text-on-surface dark:text-white placeholder:text-outline dark:placeholder:text-[#a89a90] shadow-sm"
+              className="w-full pl-9 sm:pl-12 pr-20 sm:pr-28 py-2.5 sm:py-3.5 rounded-xl bg-surface-container-lowest dark:bg-surface-dim border border-outline-variant/60 dark:border-outline-variant/80 focus:outline-none focus:border-primary-container text-xs sm:text-body-sm text-on-surface dark:text-white placeholder:text-outline dark:placeholder:text-[#a89a90] shadow-sm"
             />
             <button
               type="submit"
-              className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 rounded-lg bg-primary-container text-white text-xs font-bold hover:bg-primary transition-colors cursor-pointer shadow-sm"
+              className="absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-primary-container text-white text-2xs sm:text-xs font-bold hover:bg-primary transition-colors cursor-pointer shadow-sm"
             >
               {t.findServiceBtn}
             </button>
@@ -175,24 +176,24 @@ export default function CustomerDashboardPage() {
         </div>
 
         {/* 4 Key Metrics Overview Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-space-sm md:gap-space-md">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-space-sm md:gap-space-md">
           {/* Total Requests */}
           <div
             onClick={() => router.push('/customer/requests')}
-            className="p-space-md rounded-2xl bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/40 shadow-sm hover:border-primary-container transition-all cursor-pointer group"
+            className="p-3 sm:p-space-md rounded-xl sm:rounded-2xl bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/40 shadow-sm hover:border-primary-container transition-all cursor-pointer group"
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-outline dark:text-inverse-on-surface/80 uppercase tracking-wider">
+              <span className="text-2xs sm:text-xs font-bold text-outline dark:text-inverse-on-surface/80 uppercase tracking-wider">
                 {t.dashTotalRequests}
               </span>
-              <div className="w-8 h-8 rounded-lg bg-primary-container/10 dark:bg-primary-container/20 text-primary-container dark:text-inverse-primary flex items-center justify-center group-hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined text-[18px]">receipt_long</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary-container/10 dark:bg-primary-container/20 text-primary-container dark:text-inverse-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined text-[16px] sm:text-[18px]">receipt_long</span>
               </div>
             </div>
-            <div className="text-3xl font-extrabold text-on-surface dark:text-white mt-2">
+            <div className="text-2xl sm:text-3xl font-extrabold text-on-surface dark:text-white mt-1.5 sm:mt-2">
               {requests.length}
             </div>
-            <p className="text-xs text-outline dark:text-inverse-on-surface/70 mt-1">
+            <p className="text-2xs sm:text-xs text-outline dark:text-inverse-on-surface/70 mt-0.5 sm:mt-1 truncate">
               {lang === 'am' ? 'የቀረቡ ጥያቄዎች' : 'All submitted requests'}
             </p>
           </div>
@@ -200,20 +201,20 @@ export default function CustomerDashboardPage() {
           {/* Active Jobs */}
           <div
             onClick={() => router.push('/customer/requests')}
-            className="p-space-md rounded-2xl bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/40 shadow-sm hover:border-secondary transition-all cursor-pointer group"
+            className="p-3 sm:p-space-md rounded-xl sm:rounded-2xl bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/40 shadow-sm hover:border-secondary transition-all cursor-pointer group"
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-secondary dark:text-secondary-container uppercase tracking-wider">
+              <span className="text-2xs sm:text-xs font-bold text-secondary dark:text-secondary-container uppercase tracking-wider">
                 {t.dashActiveRequests}
               </span>
-              <div className="w-8 h-8 rounded-lg bg-secondary/15 text-secondary dark:text-secondary-container flex items-center justify-center group-hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined text-[18px]">engineering</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-secondary/15 text-secondary dark:text-secondary-container flex items-center justify-center group-hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined text-[16px] sm:text-[18px]">engineering</span>
               </div>
             </div>
-            <div className="text-3xl font-extrabold text-secondary dark:text-secondary-container mt-2">
+            <div className="text-2xl sm:text-3xl font-extrabold text-secondary dark:text-secondary-container mt-1.5 sm:mt-2">
               {activeCount}
             </div>
-            <p className="text-xs text-outline dark:text-inverse-on-surface/70 mt-1">
+            <p className="text-2xs sm:text-xs text-outline dark:text-inverse-on-surface/70 mt-0.5 sm:mt-1 truncate">
               {lang === 'am' ? 'ተቀባይነት ያገኙ / በስራ ላይ' : 'Accepted or in progress'}
             </p>
           </div>
@@ -221,20 +222,20 @@ export default function CustomerDashboardPage() {
           {/* Completed Services */}
           <div
             onClick={() => router.push('/customer/requests')}
-            className="p-space-md rounded-2xl bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/40 shadow-sm hover:border-primary-container transition-all cursor-pointer group"
+            className="p-3 sm:p-space-md rounded-xl sm:rounded-2xl bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/40 shadow-sm hover:border-primary-container transition-all cursor-pointer group"
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-primary-container dark:text-inverse-primary uppercase tracking-wider">
+              <span className="text-2xs sm:text-xs font-bold text-primary-container dark:text-inverse-primary uppercase tracking-wider">
                 {t.dashCompletedRequests}
               </span>
-              <div className="w-8 h-8 rounded-lg bg-primary-container/15 text-primary-container dark:text-inverse-primary flex items-center justify-center group-hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined text-[18px]">task_alt</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary-container/15 text-primary-container dark:text-inverse-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined text-[16px] sm:text-[18px]">task_alt</span>
               </div>
             </div>
-            <div className="text-3xl font-extrabold text-primary-container dark:text-inverse-primary mt-2">
+            <div className="text-2xl sm:text-3xl font-extrabold text-primary-container dark:text-inverse-primary mt-1.5 sm:mt-2">
               {completedCount}
             </div>
-            <p className="text-xs text-outline dark:text-inverse-on-surface/70 mt-1">
+            <p className="text-2xs sm:text-xs text-outline dark:text-inverse-on-surface/70 mt-0.5 sm:mt-1 truncate">
               {lang === 'am' ? 'በተሳካ ሁኔታ የተጠናቀቁ' : 'Successfully completed'}
             </p>
           </div>
@@ -242,20 +243,20 @@ export default function CustomerDashboardPage() {
           {/* Verified Pros Available */}
           <div
             onClick={() => router.push('/customer/services')}
-            className="p-space-md rounded-2xl bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/40 shadow-sm hover:border-tertiary-container transition-all cursor-pointer group"
+            className="p-3 sm:p-space-md rounded-xl sm:rounded-2xl bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/40 shadow-sm hover:border-tertiary-container transition-all cursor-pointer group"
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-tertiary dark:text-amber-400 uppercase tracking-wider">
+              <span className="text-2xs sm:text-xs font-bold text-tertiary dark:text-amber-400 uppercase tracking-wider">
                 {t.dashVerifiedPros}
               </span>
-              <div className="w-8 h-8 rounded-lg bg-tertiary-container/20 text-tertiary dark:text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined text-[18px]">verified_user</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-tertiary-container/20 text-tertiary dark:text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined text-[16px] sm:text-[18px]">verified_user</span>
               </div>
             </div>
-            <div className="text-3xl font-extrabold text-on-surface dark:text-white mt-2">
+            <div className="text-2xl sm:text-3xl font-extrabold text-on-surface dark:text-white mt-1.5 sm:mt-2">
               {providers.length > 0 ? providers.length : '10+'}
             </div>
-            <p className="text-xs text-outline dark:text-inverse-on-surface/70 mt-1">
+            <p className="text-2xs sm:text-xs text-outline dark:text-inverse-on-surface/70 mt-0.5 sm:mt-1 truncate">
               {lang === 'am' ? 'በደሴ የተረጋገጡ ባለሙያዎች' : 'Active pros in Dessie'}
             </p>
           </div>
@@ -392,60 +393,12 @@ export default function CustomerDashboardPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md">
               {requests.slice(0, 3).map((req) => (
-                <div
+                <ServiceRequestCard
                   key={req.id}
-                  onClick={() => router.push('/customer/requests')}
-                  className="p-4 rounded-xl bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/40 shadow-sm hover:border-primary-container transition-all cursor-pointer space-y-3 flex flex-col justify-between overflow-hidden"
-                >
-                  <div className="space-y-2 min-w-0">
-                    <div className="flex justify-between items-start gap-2">
-                      <span className="font-bold text-on-surface dark:text-white text-body-md line-clamp-1 min-w-0 flex-1">
-                        {req.service?.name || 'Service Request'}
-                      </span>
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase shrink-0 border ${
-                          req.status === 'completed'
-                            ? 'bg-primary-container/15 text-primary-container border-primary-container/30'
-                            : req.status === 'in_progress'
-                            ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30'
-                            : req.status === 'accepted'
-                            ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30'
-                            : req.status === 'rejected'
-                            ? 'bg-error/15 text-error border-error/30'
-                            : 'bg-secondary/15 text-secondary border-secondary/30'
-                        }`}
-                      >
-                        {req.status}
-                      </span>
-                    </div>
-
-                    {req.provider && (
-                      <div className="flex items-center gap-1.5 text-xs text-outline dark:text-inverse-on-surface/75">
-                        <span className="material-symbols-outlined text-[15px]">storefront</span>
-                        <span className="font-semibold text-on-surface dark:text-white">
-                          {req.provider.business_name}
-                        </span>
-                        <span>•</span>
-                        <span>{req.provider.location}</span>
-                      </div>
-                    )}
-
-                    <p className="text-body-sm text-outline dark:text-inverse-on-surface/85 line-clamp-2">
-                      {req.description}
-                    </p>
-                  </div>
-
-                  <div className="pt-2 border-t border-outline-variant/20 flex justify-between items-center text-xs text-outline dark:text-inverse-on-surface/70">
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[14px]">calendar_today</span>
-                      <span>{req.requested_date}</span>
-                    </span>
-                    <span className="font-semibold text-primary-container dark:text-inverse-primary flex items-center gap-0.5">
-                      <span>{lang === 'am' ? 'ዝርዝር ይመልከቱ' : 'Details'}</span>
-                      <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-                    </span>
-                  </div>
-                </div>
+                  request={req}
+                  lang={lang}
+                  onClick={() => router.push(`/customer/requests?requestId=${req.id}`)}
+                />
               ))}
             </div>
           )}

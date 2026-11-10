@@ -6,7 +6,7 @@ import Header from '@/components/auth/Header';
 import Footer from '@/components/auth/Footer';
 import ConfirmLogoutModal from '@/components/ConfirmLogoutModal';
 import { useLanguage } from '@/components/LanguageContext';
-import { getCurrentUser, logoutUser, User, getStoredToken, uploadProviderCv } from '@/lib/api/auth';
+import { getCurrentUser, logoutUser, User, getStoredToken, uploadProviderCv, formatApiError } from '@/lib/api/auth';
 import {
   getProviderRequests,
   acceptProviderRequest,
@@ -171,17 +171,31 @@ export default function ProviderDashboardPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.type !== 'application/pdf') {
+    const isPdfMime = file.type === 'application/pdf' || file.type === 'application/x-pdf';
+    const hasPdfExt = file.name.toLowerCase().endsWith('.pdf');
+    if (!isPdfMime && !(file.type === '' && hasPdfExt)) {
       setUploadError(t.errCvInvalidType);
+      e.target.value = '';
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
       setUploadError(t.errCvTooLarge);
+      e.target.value = '';
       return;
     }
 
     setSelectedFile(file);
+  };
+
+  const closeUploadModal = () => {
+    setShowUploadModal(false);
+    setSelectedFile(null);
+    setUploadError(null);
+    setUploadSuccess(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleCvUploadSubmit = async (e: React.FormEvent) => {
@@ -198,13 +212,16 @@ export default function ProviderDashboardPage() {
       const updatedUser = await getCurrentUser();
       setUser(updatedUser);
       setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       setTimeout(() => {
         setShowUploadModal(false);
         setUploadSuccess(null);
       }, 1500);
-    } catch (err: any) {
-      console.error('Failed to upload CV:', err);
-      const msg = err.response?.data?.message || err.response?.data?.errors?.cv?.[0] || 'Upload failed.';
+    } catch (err: unknown) {
+      const formatted = formatApiError(err, 'Failed to upload CV. Please check the file and try again.');
+      const msg = formatted.errors?.cv?.[0] || formatted.message;
       setUploadError(msg);
     } finally {
       setUploading(false);
@@ -242,15 +259,15 @@ export default function ProviderDashboardPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background text-on-surface transition-colors duration-200">
       <Header />
-      <main className="flex-1 w-full max-w-7xl mx-auto px-margin-mobile md:px-margin py-space-lg md:py-space-xl space-y-space-lg">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-margin-mobile md:px-margin py-4 sm:py-space-lg md:py-space-xl space-y-4 sm:space-y-space-lg">
         {/* Provider Business Hero Banner */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-surface-container-low via-surface-container-lowest to-surface-container-low dark:from-inverse-surface dark:via-[#1c1916] dark:to-inverse-surface rounded-2xl border border-outline-variant/40 shadow-sm p-space-lg md:p-space-xl">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
+        <div className="relative overflow-hidden bg-gradient-to-br from-surface-container-low via-surface-container-lowest to-surface-container-low dark:from-inverse-surface dark:via-[#1c1916] dark:to-inverse-surface rounded-2xl border border-outline-variant/40 shadow-sm p-4 sm:p-space-lg md:p-space-xl">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-6 relative z-10">
             <div className="space-y-2 max-w-2xl">
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 {/* Verification Badge */}
                 <span
-                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
+                  className={`inline-flex items-center gap-1 sm:gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-2xs sm:text-xs font-bold uppercase tracking-wider border ${
                     isVerified
                       ? 'bg-primary-container/15 text-primary-container dark:bg-primary-container/25 dark:text-inverse-primary border-primary-container/30'
                       : isRejected
@@ -258,7 +275,7 @@ export default function ProviderDashboardPage() {
                       : 'bg-secondary/15 text-secondary border-secondary/30'
                   }`}
                 >
-                  <span className="material-symbols-outlined text-[16px]">
+                  <span className="material-symbols-outlined text-[14px] sm:text-[16px]">
                     {isVerified ? 'verified' : isRejected ? 'gpp_bad' : 'schedule'}
                   </span>
                   <span>
@@ -271,15 +288,15 @@ export default function ProviderDashboardPage() {
                 </span>
 
                 {user?.provider_profile?.location && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-container-high dark:bg-surface-dim text-outline dark:text-inverse-on-surface/80 border border-outline-variant/30">
-                    <span className="material-symbols-outlined text-[14px]">location_on</span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-2xs sm:text-xs font-semibold bg-surface-container-high dark:bg-surface-dim text-outline dark:text-inverse-on-surface/80 border border-outline-variant/30">
+                    <span className="material-symbols-outlined text-[12px] sm:text-[14px]">location_on</span>
                     <span>{user.provider_profile.location}</span>
                   </span>
                 )}
 
                 {user?.provider_profile?.experience_years !== undefined && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-container-high dark:bg-surface-dim text-outline dark:text-inverse-on-surface/80 border border-outline-variant/30">
-                    <span className="material-symbols-outlined text-[14px]">work_history</span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-2xs sm:text-xs font-semibold bg-surface-container-high dark:bg-surface-dim text-outline dark:text-inverse-on-surface/80 border border-outline-variant/30">
+                    <span className="material-symbols-outlined text-[12px] sm:text-[14px]">work_history</span>
                     <span>
                       {user.provider_profile.experience_years} {t.experienceYearsSuffix}
                     </span>
@@ -287,29 +304,29 @@ export default function ProviderDashboardPage() {
                 )}
               </div>
 
-              <h1 className="text-headline-lg font-headline-lg font-extrabold text-on-surface dark:text-white tracking-tight">
+              <h1 className="text-xl sm:text-2xl md:text-headline-lg font-headline-lg font-extrabold text-on-surface dark:text-white tracking-tight">
                 {user?.provider_profile?.business_name || user?.name}
               </h1>
-              <p className="text-body-sm text-outline dark:text-inverse-on-surface/80">
+              <p className="text-2xs sm:text-body-sm text-outline dark:text-inverse-on-surface/80">
                 {user?.name} • {user?.email} {user?.phone ? `• ${user.phone}` : ''}
               </p>
             </div>
 
             {/* Availability Switcher & Actions */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 self-stretch md:self-auto">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 self-stretch md:self-auto">
               {/* Availability Segmented Switcher */}
               <div className="bg-surface-container-high/60 dark:bg-surface-dim/80 p-1 rounded-xl border border-outline-variant/30 backdrop-blur-sm flex items-center justify-between gap-1">
                 <button
                   type="button"
                   onClick={() => handleAvailabilityChange('available')}
                   disabled={updatingAvailability}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-2xs sm:text-xs font-bold transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer ${
                     availability === 'available'
                       ? 'bg-primary-container text-white shadow-xs'
                       : 'text-outline dark:text-inverse-on-surface/70 hover:text-on-surface dark:hover:text-white'
                   }`}
                 >
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400" />
                   <span>{t.statusAvailable}</span>
                 </button>
 
@@ -317,13 +334,13 @@ export default function ProviderDashboardPage() {
                   type="button"
                   onClick={() => handleAvailabilityChange('busy')}
                   disabled={updatingAvailability}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-2xs sm:text-xs font-bold transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer ${
                     availability === 'busy'
                       ? 'bg-secondary text-white shadow-xs'
                       : 'text-outline dark:text-inverse-on-surface/70 hover:text-on-surface dark:hover:text-white'
                   }`}
                 >
-                  <span className="w-2 h-2 rounded-full bg-amber-400" />
+                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-400" />
                   <span>{t.statusBusy}</span>
                 </button>
 
@@ -331,13 +348,13 @@ export default function ProviderDashboardPage() {
                   type="button"
                   onClick={() => handleAvailabilityChange('offline')}
                   disabled={updatingAvailability}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-2xs sm:text-xs font-bold transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer ${
                     availability === 'offline'
                       ? 'bg-outline text-white shadow-xs'
                       : 'text-outline dark:text-inverse-on-surface/70 hover:text-on-surface dark:hover:text-white'
                   }`}
                 >
-                  <span className="w-2 h-2 rounded-full bg-stone-400" />
+                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-stone-400" />
                   <span>{t.statusOffline}</span>
                 </button>
               </div>
@@ -346,10 +363,10 @@ export default function ProviderDashboardPage() {
                 onClick={() => setShowLogoutModal(true)}
                 disabled={loggingOut}
                 title={t.btnLogout}
-                className="px-3 py-2 rounded-xl bg-surface-container-high dark:bg-surface-dim hover:bg-error hover:text-white dark:hover:bg-error text-on-surface dark:text-inverse-on-surface text-xs font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
+                className="px-3 py-1.5 sm:py-2 rounded-xl bg-surface-container-high dark:bg-surface-dim hover:bg-error hover:text-white dark:hover:bg-error text-on-surface dark:text-inverse-on-surface text-2xs sm:text-xs font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
               >
-                <span className="material-symbols-outlined text-[18px]">logout</span>
-                <span className="hidden sm:inline">{t.btnLogout}</span>
+                <span className="material-symbols-outlined text-[16px] sm:text-[18px]">logout</span>
+                <span className="inline">{t.btnLogout}</span>
               </button>
             </div>
           </div>
@@ -412,78 +429,78 @@ export default function ProviderDashboardPage() {
         </div>
 
         {/* 4 Provider Metrics Overview Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-space-sm md:gap-space-md">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-space-sm md:gap-space-md">
           {/* Total Incoming Requests */}
-          <div className="p-space-md rounded-2xl bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/40 shadow-sm">
+          <div className="p-3 sm:p-space-md rounded-xl sm:rounded-2xl bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/40 shadow-sm">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-outline dark:text-inverse-on-surface/80 uppercase tracking-wider">
+              <span className="text-2xs sm:text-xs font-bold text-outline dark:text-inverse-on-surface/80 uppercase tracking-wider">
                 {t.dashTotalRequests}
               </span>
-              <div className="w-8 h-8 rounded-lg bg-primary-container/10 dark:bg-primary-container/20 text-primary-container dark:text-inverse-primary flex items-center justify-center">
-                <span className="material-symbols-outlined text-[18px]">receipt_long</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary-container/10 dark:bg-primary-container/20 text-primary-container dark:text-inverse-primary flex items-center justify-center">
+                <span className="material-symbols-outlined text-[16px] sm:text-[18px]">receipt_long</span>
               </div>
             </div>
-            <div className="text-3xl font-extrabold text-on-surface dark:text-white mt-2">
+            <div className="text-2xl sm:text-3xl font-extrabold text-on-surface dark:text-white mt-1.5 sm:mt-2">
               {requests.length}
             </div>
-            <p className="text-xs text-outline dark:text-inverse-on-surface/70 mt-1">
+            <p className="text-2xs sm:text-xs text-outline dark:text-inverse-on-surface/70 mt-0.5 sm:mt-1 truncate">
               {lang === 'am' ? 'የገቡ ጥያቄዎች በሙሉ' : 'Lifetime customer inquiries'}
             </p>
           </div>
 
           {/* Action Required: Pending Approval */}
-          <div className="p-space-md rounded-2xl bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/40 shadow-sm">
+          <div className="p-3 sm:p-space-md rounded-xl sm:rounded-2xl bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/40 shadow-sm">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-secondary dark:text-secondary-container uppercase tracking-wider">
+              <span className="text-2xs sm:text-xs font-bold text-secondary dark:text-secondary-container uppercase tracking-wider">
                 {lang === 'am' ? 'እርምጃ የሚያስፈልጋቸው' : 'Action Needed'}
               </span>
-              <div className="w-8 h-8 rounded-lg bg-secondary/15 text-secondary dark:text-secondary-container flex items-center justify-center">
-                <span className="material-symbols-outlined text-[18px]">notification_important</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-secondary/15 text-secondary dark:text-secondary-container flex items-center justify-center">
+                <span className="material-symbols-outlined text-[16px] sm:text-[18px]">notification_important</span>
               </div>
             </div>
-            <div className="text-3xl font-extrabold text-secondary dark:text-secondary-container mt-2 flex items-center gap-2">
+            <div className="text-2xl sm:text-3xl font-extrabold text-secondary dark:text-secondary-container mt-1.5 sm:mt-2 flex items-center gap-1.5 sm:gap-2">
               <span>{pendingRequests.length}</span>
               {pendingRequests.length > 0 && (
-                <span className="w-2.5 h-2.5 rounded-full bg-secondary animate-pulse" />
+                <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-secondary animate-pulse" />
               )}
             </div>
-            <p className="text-xs text-outline dark:text-inverse-on-surface/70 mt-1">
+            <p className="text-2xs sm:text-xs text-outline dark:text-inverse-on-surface/70 mt-0.5 sm:mt-1 truncate">
               {lang === 'am' ? 'መቀበል ወይም አለመቀበል' : 'Awaiting your acceptance'}
             </p>
           </div>
 
           {/* Active Jobs */}
-          <div className="p-space-md rounded-2xl bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/40 shadow-sm">
+          <div className="p-3 sm:p-space-md rounded-xl sm:rounded-2xl bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/40 shadow-sm">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-primary-container dark:text-inverse-primary uppercase tracking-wider">
+              <span className="text-2xs sm:text-xs font-bold text-primary-container dark:text-inverse-primary uppercase tracking-wider">
                 {t.dashActiveRequests}
               </span>
-              <div className="w-8 h-8 rounded-lg bg-primary-container/15 text-primary-container dark:text-inverse-primary flex items-center justify-center">
-                <span className="material-symbols-outlined text-[18px]">engineering</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary-container/15 text-primary-container dark:text-inverse-primary flex items-center justify-center">
+                <span className="material-symbols-outlined text-[16px] sm:text-[18px]">engineering</span>
               </div>
             </div>
-            <div className="text-3xl font-extrabold text-primary-container dark:text-inverse-primary mt-2">
+            <div className="text-2xl sm:text-3xl font-extrabold text-primary-container dark:text-inverse-primary mt-1.5 sm:mt-2">
               {activeJobs.length}
             </div>
-            <p className="text-xs text-outline dark:text-inverse-on-surface/70 mt-1">
+            <p className="text-2xs sm:text-xs text-outline dark:text-inverse-on-surface/70 mt-0.5 sm:mt-1 truncate">
               {lang === 'am' ? 'ተቀባይነት ያገኙ / በሂደት ላይ' : 'Accepted and in progress'}
             </p>
           </div>
 
           {/* Completed Jobs */}
-          <div className="p-space-md rounded-2xl bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/40 shadow-sm">
+          <div className="p-3 sm:p-space-md rounded-xl sm:rounded-2xl bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/40 shadow-sm">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-tertiary dark:text-amber-400 uppercase tracking-wider">
+              <span className="text-2xs sm:text-xs font-bold text-tertiary dark:text-amber-400 uppercase tracking-wider">
                 {t.dashCompletedRequests}
               </span>
-              <div className="w-8 h-8 rounded-lg bg-tertiary-container/20 text-tertiary dark:text-amber-400 flex items-center justify-center">
-                <span className="material-symbols-outlined text-[18px]">task_alt</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-tertiary-container/20 text-tertiary dark:text-amber-400 flex items-center justify-center">
+                <span className="material-symbols-outlined text-[16px] sm:text-[18px]">task_alt</span>
               </div>
             </div>
-            <div className="text-3xl font-extrabold text-on-surface dark:text-white mt-2">
+            <div className="text-2xl sm:text-3xl font-extrabold text-on-surface dark:text-white mt-1.5 sm:mt-2">
               {completedJobs.length}
             </div>
-            <p className="text-xs text-outline dark:text-inverse-on-surface/70 mt-1">
+            <p className="text-2xs sm:text-xs text-outline dark:text-inverse-on-surface/70 mt-0.5 sm:mt-1 truncate">
               {lang === 'am' ? 'የተጠናቀቁ ስራዎች' : 'Delivered jobs'}
             </p>
           </div>
@@ -819,12 +836,8 @@ export default function ProviderDashboardPage() {
                 {t.reUploadCvBtn}
               </h3>
               <button
-                onClick={() => {
-                  setShowUploadModal(false);
-                  setSelectedFile(null);
-                  setUploadError(null);
-                  setUploadSuccess(null);
-                }}
+                type="button"
+                onClick={closeUploadModal}
                 className="text-outline hover:text-on-surface dark:hover:text-white cursor-pointer"
               >
                 <span className="material-symbols-outlined">close</span>
@@ -878,11 +891,7 @@ export default function ProviderDashboardPage() {
                 <div className="flex justify-end gap-3 pt-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      setShowUploadModal(false);
-                      setSelectedFile(null);
-                      setUploadError(null);
-                    }}
+                    onClick={closeUploadModal}
                     disabled={uploading}
                     className="px-4 py-2 rounded-lg bg-surface-container-high dark:bg-surface-dim text-body-sm font-semibold hover:bg-surface-container-highest transition-colors cursor-pointer text-on-surface dark:text-white"
                   >

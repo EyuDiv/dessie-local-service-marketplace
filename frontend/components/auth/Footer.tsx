@@ -8,14 +8,14 @@ export default function Footer() {
 
   return (
     <footer className="bg-surface-container dark:bg-inverse-surface mt-auto border-t border-outline-variant/20 transition-colors duration-200">
-      <div className="w-full max-w-7xl mx-auto px-margin-mobile md:px-margin py-space-lg flex flex-col md:flex-row justify-between items-center gap-space-md">
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-margin-mobile md:px-margin py-3 sm:py-space-lg flex flex-col md:flex-row justify-between items-center gap-2 sm:gap-space-md">
         <p
           id="footerCopyright"
-          className="text-body-sm font-body-sm text-on-surface-variant dark:text-outline-variant text-center md:text-left"
+          className="text-xs sm:text-body-sm font-body-sm text-on-surface-variant dark:text-outline-variant text-center md:text-left"
         >
           {t.footerCopyright}
         </p>
-        <nav className="flex flex-wrap items-center justify-center gap-space-md text-label-md font-label-md">
+        <nav className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-space-md text-xs sm:text-label-md font-label-md">
           <a
             href="#"
             id="footerPrivacy"

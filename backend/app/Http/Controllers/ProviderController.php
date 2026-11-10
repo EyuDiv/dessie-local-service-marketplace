@@ -43,6 +43,10 @@ class ProviderController extends Controller
             ], 404);
         }
 
+        if ($limitResponse = $this->checkPhpUploadLimit($request, ['cv'])) {
+            return $limitResponse;
+        }
+
         // 1. Validate the incoming CV
         $request->validate([
             'cv' => ['required', 'file', 'mimes:pdf', 'max:5120'], // Max 5MB PDF

@@ -10,12 +10,24 @@ use Illuminate\Http\Request;
 class ServiceRequestController extends Controller
 {
     /**
+     * Relationships eager-loaded for customer service request views.
+     *
+     * @var list<string>
+     */
+    private const CUSTOMER_RELATIONS = [
+        'provider:id,user_id,business_name,location,availability_status',
+        'provider.user:id,phone',
+        'service:id,name',
+        'review:id,request_id,rating,comment,created_at',
+    ];
+
+    /**
      * Display a listing of the customer's own service requests.
      */
     public function index(Request $request): JsonResponse
     {
         $requests = ServiceRequest::where('customer_id', $request->user()->id)
-            ->with(['provider:id,business_name,location', 'service:id,name'])
+            ->with(self::CUSTOMER_RELATIONS)
             ->latest()
             ->get();
 
@@ -68,7 +80,7 @@ class ServiceRequestController extends Controller
 
         return response()->json([
             'message' => 'Service request created successfully',
-            'data' => $serviceRequest->load(['provider:id,business_name,location', 'service:id,name']),
+            'data' => $serviceRequest->load(self::CUSTOMER_RELATIONS),
         ], 201);
     }
 
@@ -77,10 +89,7 @@ class ServiceRequestController extends Controller
      */
     public function show(Request $request, string $id): JsonResponse
     {
-        $serviceRequest = ServiceRequest::with([
-            'provider:id,business_name,location,availability_status',
-            'service:id,name',
-        ])->find($id);
+        $serviceRequest = ServiceRequest::with(self::CUSTOMER_RELATIONS)->find($id);
 
         if (! $serviceRequest) {
             return response()->json([
@@ -133,7 +142,7 @@ class ServiceRequestController extends Controller
 
         return response()->json([
             'message' => 'Service request cancelled successfully',
-            'data' => $serviceRequest->fresh(),
+            'data' => $serviceRequest->fresh(self::CUSTOMER_RELATIONS),
         ]);
     }
 }

@@ -129,4 +129,12 @@ class ProviderProfile extends Model
     {
         return $this->hasMany(Review::class, 'provider_id');
     }
+
+    /**
+     * Get the complaints referencing this provider.
+     */
+    public function complaints(): HasMany
+    {
+        return $this->hasMany(Complaint::class, 'provider_id');
+    }
 }

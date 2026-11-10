@@ -12,13 +12,20 @@ export const apiClient = axios.create({
   },
 });
 
-// Request interceptor to attach Sanctum Bearer token
+// Request interceptor to attach Sanctum Bearer token and let browser set multipart boundary for FormData
 apiClient.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem(TOKEN_KEY);
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData && config.headers) {
+      if (typeof config.headers.delete === 'function') {
+        config.headers.delete('Content-Type');
+      } else {
+        delete config.headers['Content-Type'];
       }
     }
     return config;

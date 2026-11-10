@@ -88,9 +88,21 @@ export function formatApiError(error: unknown, defaultMessage = 'An unexpected e
     const status = error.response.status;
 
     if (status === 422) {
+      const errorsObj = (data?.errors && typeof data.errors === 'object')
+        ? (data.errors as Record<string, string[]>)
+        : {};
+      const firstFieldError = Object.values(errorsObj)
+        .flat()
+        .find((m) => typeof m === 'string' && m.length > 0);
       return {
-        message: data?.message || 'Validation failed. Please verify your inputs.',
-        errors: data?.errors || {},
+        message: firstFieldError || data?.message || 'Validation failed. Please verify your inputs.',
+        errors: errorsObj,
+      };
+    }
+
+    if (status === 413) {
+      return {
+        message: 'The uploaded file is too large for the server limit. Please upload a smaller PDF.',
       };
     }
 
@@ -138,12 +150,15 @@ export async function registerUser(payload: RegisterCustomerData | RegisterProvi
   return response.data;
 }
 
-export async function uploadProviderCv(file: File): Promise<{ message: string; data: any }> {
+export async function uploadProviderCv(
+  file: File
+): Promise<{ message: string; data?: User['provider_profile'] }> {
   const formData = new FormData();
   formData.append('cv', file);
-  const response = await apiClient.post<{ message: string; data: any }>('/provider/cv', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  const response = await apiClient.post<{ message: string; data?: User['provider_profile'] }>(
+    '/provider/cv',
+    formData
+  );
   return response.data;
 }
 

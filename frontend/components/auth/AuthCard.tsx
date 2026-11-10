@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/components/LanguageContext';
+import LandingHero from './LandingHero';
 import {
   registerUser,
   loginUser,
@@ -15,9 +16,13 @@ import {
 
 interface AuthCardProps {
   initialMode?: 'register' | 'login';
+  showHeroOnMobile?: boolean;
 }
 
-export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
+export default function AuthCard({
+  initialMode = 'register',
+  showHeroOnMobile = false,
+}: AuthCardProps) {
   const router = useRouter();
   const { t } = useLanguage();
 
@@ -122,6 +127,11 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Sync authMode when initialMode prop changes
+  useEffect(() => {
+    setAuthMode(initialMode);
+  }, [initialMode]);
+
   // Switch between register and login
   const handleModeSwitch = (mode: 'register' | 'login') => {
     setAuthMode(mode);
@@ -130,6 +140,9 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
     setSuccessMessage(null);
     setCvFile(null);
     setCertFile(null);
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', `/${mode}`);
+    }
   };
 
 
@@ -295,82 +308,24 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-start">
-      {/* Left Column: Context, Services List & Value Props */}
-      <section className="lg:col-span-5 flex flex-col gap-space-lg lg:sticky lg:top-24">
-        <div>
-          <h1
-            id="heroTitle"
-            className="text-headline-xl-mobile md:text-headline-xl font-headline-xl text-on-surface dark:text-inverse-on-surface tracking-tight"
-          >
-            {t.heroTitle}
-          </h1>
-          <p
-            id="heroIntro"
-            className="text-body-md font-body-md text-on-surface-variant dark:text-outline-variant mt-space-sm leading-relaxed"
-          >
-            {t.heroIntro}
-          </p>
-        </div>
-
-        {/* Service list / categories */}
-        <div className="p-space-lg rounded-xl bg-surface-container-lowest dark:bg-surface-variant/20 border border-outline-variant/40 shadow-sm flex flex-col gap-space-sm">
-          <div className="flex items-center gap-2 text-primary-container dark:text-inverse-primary mb-1">
-            <span className="material-symbols-outlined text-[20px]">category</span>
-            <span
-              id="servicesHeading"
-              className="text-label-md font-label-md uppercase tracking-wider font-semibold"
-            >
-              {t.servicesHeading}
-            </span>
-          </div>
-          <div id="serviceTagsContainer" className="flex flex-wrap gap-2">
-            {t.services.map((item, idx) => (
-              <span
-                key={idx}
-                className="inline-flex items-center px-2.5 py-1 rounded-md text-label-sm font-label-sm bg-surface-container dark:bg-surface-dim text-on-surface dark:text-inverse-on-surface border border-outline-variant/30"
-              >
-                {item}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Concise Note */}
-        <div className="p-space-md rounded-lg bg-surface-container-low dark:bg-surface-dim/40 border border-outline-variant/30 flex items-center gap-space-sm text-body-sm font-body-sm text-on-surface-variant dark:text-outline-variant">
-          <span className="material-symbols-outlined text-primary-container dark:text-inverse-primary text-[20px] shrink-0">
-            chat
-          </span>
-          <span id="conciseNote">{t.conciseNote}</span>
-        </div>
-
-        {/* Left Switch Auth Link */}
-        <div className="text-body-sm font-body-sm text-on-surface-variant dark:text-outline-variant">
-          <span id="leftAlreadyText">
-            {authMode === 'register' ? t.leftAlreadyText : t.bottomNoAccountText}
-          </span>
-          <button
-            id="leftAuthSwitchBtn"
-            type="button"
-            onClick={() => handleModeSwitch(authMode === 'register' ? 'login' : 'register')}
-            className="font-semibold text-primary-container dark:text-inverse-primary hover:underline ml-1 cursor-pointer focus:outline-none"
-          >
-            {authMode === 'register' ? t.leftSignInLink : t.tabRegisterText}
-          </button>
-        </div>
-
-      </section>
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-md lg:gap-space-xl items-start">
+      {/* Left Column: Context, Services List & Value Props (Landing Hero) */}
+      <LandingHero
+        authMode={authMode}
+        onSwitchMode={handleModeSwitch}
+        className={`${showHeroOnMobile ? 'flex' : 'hidden lg:flex'} lg:col-span-5`}
+      />
 
       {/* Right Column: Registration & Login Form Card */}
-      <section className="lg:col-span-7">
-        <div className="bg-surface-container-lowest dark:bg-inverse-surface rounded-xl border border-outline-variant/40 shadow-sm p-space-lg md:p-space-xl transition-colors duration-200">
+      <section className={`w-full ${showHeroOnMobile ? 'lg:col-span-7' : 'lg:col-span-7 max-w-lg lg:max-w-none mx-auto'}`}>
+        <div className="bg-surface-container-lowest dark:bg-inverse-surface rounded-2xl border border-outline-variant/40 shadow-sm p-4 sm:p-space-lg md:p-space-xl transition-colors duration-200">
           {/* Auth Tabs */}
-          <div className="flex items-center gap-3 border-b border-outline-variant/30 pb-3 mb-space-lg">
+          <div className="flex items-center gap-2 sm:gap-3 border-b border-outline-variant/30 pb-2.5 sm:pb-3 mb-space-sm sm:mb-space-lg">
             <button
               id="tabRegister"
               type="button"
               onClick={() => handleModeSwitch('register')}
-              className={`pb-1 text-headline-sm font-headline-sm transition-colors focus:outline-none cursor-pointer ${
+              className={`pb-1 text-base sm:text-headline-sm font-headline-sm transition-colors focus:outline-none cursor-pointer ${
                 authMode === 'register'
                   ? 'font-bold border-b-2 border-primary-container text-primary-container dark:text-inverse-primary'
                   : 'font-medium text-outline hover:text-on-surface dark:hover:text-inverse-on-surface'
@@ -383,7 +338,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
               id="tabLogin"
               type="button"
               onClick={() => handleModeSwitch('login')}
-              className={`pb-1 text-headline-sm font-headline-sm transition-colors focus:outline-none cursor-pointer ${
+              className={`pb-1 text-base sm:text-headline-sm font-headline-sm transition-colors focus:outline-none cursor-pointer ${
                 authMode === 'login'
                   ? 'font-bold border-b-2 border-primary-container text-primary-container dark:text-inverse-primary'
                   : 'font-medium text-outline hover:text-on-surface dark:hover:text-inverse-on-surface'
@@ -394,16 +349,16 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
           </div>
 
           {/* Header Info */}
-          <div className="pb-space-sm mb-space-md">
+          <div className="pb-space-xs mb-3 sm:mb-space-md">
             <h2
               id="formHeaderTitle"
-              className="text-headline-lg-mobile md:text-headline-lg font-headline-lg text-on-surface dark:text-inverse-on-surface"
+              className="text-title-lg sm:text-headline-lg font-headline-lg text-on-surface dark:text-inverse-on-surface"
             >
               {authMode === 'register' ? t.formHeaderTitleRegister : t.formHeaderTitleLogin}
             </h2>
             <p
               id="formHeaderSubtitle"
-              className="text-body-sm font-body-sm text-on-surface-variant dark:text-outline-variant mt-1"
+              className="text-body-sm font-body-sm text-on-surface-variant dark:text-outline-variant mt-0.5 sm:mt-1"
             >
               {authMode === 'register' ? t.formHeaderSubtitleRegister : t.formHeaderSubtitleLogin}
             </p>
@@ -577,7 +532,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
               </div>
 
               {/* COMMON CUSTOMER FIELDS */}
-              <div className="space-y-space-md pt-space-xs">
+              <div className="space-y-3 sm:space-y-space-md pt-space-xs">
                 {/* Full Name */}
                 <div>
                   <label
@@ -602,7 +557,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                         if (errors.name) setErrors((prev) => ({ ...prev, name: '' }));
                       }}
                       placeholder={t.namePlaceholder}
-                      className="w-full pl-10 pr-4 h-12 rounded-lg border border-outline-variant/60 bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-body-md font-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all outline-none"
+                      className="w-full pl-10 pr-4 h-11 sm:h-12 rounded-lg border border-outline-variant/60 bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-body-md font-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all outline-none"
                     />
                   </div>
                   {errors.name && (
@@ -613,7 +568,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                 </div>
 
                 {/* Email Address & Phone Number */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-space-md">
                   {/* Email Address */}
                   <div>
                     <label
@@ -638,7 +593,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                           if (errors.email) setErrors((prev) => ({ ...prev, email: '' }));
                         }}
                         placeholder={t.emailPlaceholder}
-                        className="w-full pl-10 pr-4 h-12 rounded-lg border border-outline-variant/60 bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-body-md font-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all outline-none"
+                        className="w-full pl-10 pr-4 h-11 sm:h-12 rounded-lg border border-outline-variant/60 bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-body-md font-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all outline-none"
                       />
                     </div>
                     {errors.email && (
@@ -672,7 +627,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                           if (errors.phone) setErrors((prev) => ({ ...prev, phone: '' }));
                         }}
                         placeholder={t.phonePlaceholder}
-                        className="w-full pl-10 pr-4 h-12 rounded-lg border border-outline-variant/60 bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-body-md font-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all outline-none"
+                        className="w-full pl-10 pr-4 h-11 sm:h-12 rounded-lg border border-outline-variant/60 bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-body-md font-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all outline-none"
                       />
                     </div>
                     {errors.phone && (
@@ -684,7 +639,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                 </div>
 
                 {/* Password & Confirm Password */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-space-md">
                   {/* Password */}
                   <div>
                     <label
@@ -710,7 +665,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                           if (errors.password) setErrors((prev) => ({ ...prev, password: '' }));
                         }}
                         placeholder="••••••••"
-                        className="w-full pl-10 pr-11 h-12 rounded-lg border border-outline-variant/60 bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-body-md font-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all outline-none"
+                        className="w-full pl-10 pr-11 h-11 sm:h-12 rounded-lg border border-outline-variant/60 bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-body-md font-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all outline-none"
                       />
                       <button
                         id="togglePassword"
@@ -757,7 +712,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                           if (errors.confirm) setErrors((prev) => ({ ...prev, confirm: '' }));
                         }}
                         placeholder="••••••••"
-                        className="w-full pl-10 pr-11 h-12 rounded-lg border border-outline-variant/60 bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-body-md font-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all outline-none"
+                        className="w-full pl-10 pr-11 h-11 sm:h-12 rounded-lg border border-outline-variant/60 bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-body-md font-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all outline-none"
                       />
                       <button
                         id="toggleConfirmPassword"
@@ -809,7 +764,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                           if (errors.business) setErrors((prev) => ({ ...prev, business: '' }));
                         }}
                         placeholder={t.businessPlaceholder}
-                        className="w-full pl-10 pr-4 h-12 rounded-lg border border-outline-variant/60 bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-body-md font-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all outline-none"
+                        className="w-full pl-10 pr-4 h-11 sm:h-12 rounded-lg border border-outline-variant/60 bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-body-md font-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all outline-none"
                       />
                     </div>
                     {errors.business && (
@@ -844,7 +799,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                             if (errors.location) setErrors((prev) => ({ ...prev, location: '' }));
                           }}
                           placeholder={t.locationPlaceholder}
-                          className="w-full pl-10 pr-4 h-12 rounded-lg border border-outline-variant/60 bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-body-md font-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all outline-none"
+                          className="w-full pl-10 pr-4 h-11 sm:h-12 rounded-lg border border-outline-variant/60 bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-body-md font-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all outline-none"
                         />
                       </div>
                       {errors.location && (
@@ -879,7 +834,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                             if (errors.experience) setErrors((prev) => ({ ...prev, experience: '' }));
                           }}
                           placeholder={t.experiencePlaceholder}
-                          className="w-full pl-10 pr-4 h-12 rounded-lg border border-outline-variant/60 bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-body-md font-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all outline-none"
+                          className="w-full pl-10 pr-4 h-11 sm:h-12 rounded-lg border border-outline-variant/60 bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-body-md font-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all outline-none"
                         />
                       </div>
                       {errors.experience && (
@@ -975,7 +930,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                       ) : (
                         <div
                           id="cvFileSelectedCard"
-                          className="p-3.5 rounded-xl border border-primary-container/40 bg-primary-container/5 dark:bg-primary-container/10 flex items-center justify-between gap-3 shadow-2xs"
+                          className="p-3.5 rounded-xl border border-primary-container/40 bg-primary-container/5 dark:bg-primary-container/10 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 shadow-2xs"
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="w-10 h-10 rounded-lg bg-primary-container text-white flex items-center justify-center shrink-0 shadow-xs">
@@ -1080,7 +1035,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                       ) : (
                         <div
                           id="certFileSelectedCard"
-                          className="p-3.5 rounded-xl border border-secondary/40 bg-secondary/5 dark:bg-secondary/10 flex items-center justify-between gap-3 shadow-2xs"
+                          className="p-3.5 rounded-xl border border-secondary/40 bg-secondary/5 dark:bg-secondary/10 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 shadow-2xs"
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="w-10 h-10 rounded-lg bg-secondary text-white flex items-center justify-center shrink-0 shadow-xs">
@@ -1148,7 +1103,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                   id="submitBtn"
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full h-12 rounded-lg bg-primary-container text-white font-headline-sm text-headline-sm flex items-center justify-center gap-space-sm shadow hover:bg-primary-container/95 active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-4 focus:ring-primary-container/25 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+                  className="w-full h-11 sm:h-12 rounded-lg bg-primary-container text-white font-headline-sm text-base sm:text-headline-sm flex items-center justify-center gap-space-sm shadow hover:bg-primary-container/95 active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-4 focus:ring-primary-container/25 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <span id="btnText">
                     {isSubmitting
@@ -1182,7 +1137,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
 
           {/* LOGIN FORM */}
           {authMode === 'login' && (
-            <form id="loginForm" onSubmit={handleLoginSubmit} noValidate className="space-y-space-md">
+            <form id="loginForm" onSubmit={handleLoginSubmit} noValidate className="space-y-3 sm:space-y-space-md">
               {/* Login Email */}
               <div>
                 <label
@@ -1207,7 +1162,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                       if (errors.loginEmail) setErrors((prev) => ({ ...prev, loginEmail: '' }));
                     }}
                     placeholder={t.loginEmailPlaceholder}
-                    className="w-full pl-10 pr-4 h-12 rounded-lg border border-outline-variant/60 bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-body-md font-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all outline-none"
+                    className="w-full pl-10 pr-4 h-11 sm:h-12 rounded-lg border border-outline-variant/60 bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-body-md font-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all outline-none"
                   />
                 </div>
                 {errors.loginEmail && (
@@ -1241,7 +1196,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                       if (errors.loginPassword) setErrors((prev) => ({ ...prev, loginPassword: '' }));
                     }}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-11 h-12 rounded-lg border border-outline-variant/60 bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-body-md font-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all outline-none"
+                    className="w-full pl-10 pr-11 h-11 sm:h-12 rounded-lg border border-outline-variant/60 bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-body-md font-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all outline-none"
                   />
                   <button
                     id="toggleLoginPassword"
@@ -1268,7 +1223,7 @@ export default function AuthCard({ initialMode = 'register' }: AuthCardProps) {
                   id="loginSubmitBtn"
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full h-12 rounded-lg bg-primary-container text-white font-headline-sm text-headline-sm flex items-center justify-center gap-space-sm shadow hover:bg-primary-container/95 active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-4 focus:ring-primary-container/25 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+                  className="w-full h-11 sm:h-12 rounded-lg bg-primary-container text-white font-headline-sm text-base sm:text-headline-sm flex items-center justify-center gap-space-sm shadow hover:bg-primary-container/95 active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-4 focus:ring-primary-container/25 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <span id="btnLoginText">{isSubmitting ? t.btnLoginLoading : t.btnLoginText}</span>
                   {isSubmitting && (

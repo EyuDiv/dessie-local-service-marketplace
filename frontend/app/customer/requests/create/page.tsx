@@ -308,21 +308,21 @@ function CreateRequestContent() {
       {/* ============================================================== */}
       {/* TOP APP BAR (Dessie Service Header)                             */}
       {/* ============================================================== */}
-      <header className="bg-surface-container-lowest dark:bg-inverse-surface border-b border-outline-variant/30 dark:border-outline/20 shadow-sm dark:shadow-none top-0 sticky z-40 w-full px-margin-mobile md:px-margin flex justify-between items-center h-16 transition-colors duration-200">
-        <div className="flex items-center gap-3">
-          <Link href="/customer" className="flex items-center gap-3 focus:outline-none">
-            <div className="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center text-white font-bold shadow-sm">
-              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
+      <header className="bg-surface-container-lowest dark:bg-inverse-surface border-b border-outline-variant/30 dark:border-outline/20 shadow-sm dark:shadow-none top-0 sticky z-40 w-full px-3 sm:px-margin-mobile md:px-margin flex justify-between items-center h-14 sm:h-16 transition-colors duration-200">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Link href="/customer" className="flex items-center gap-2 sm:gap-3 focus:outline-none min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary-container flex items-center justify-center text-white font-bold shadow-sm shrink-0">
+              <span className="material-symbols-outlined text-[20px] sm:text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>
                 handshake
               </span>
             </div>
-            <div>
-              <div className="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary leading-none">
+            <div className="min-w-0">
+              <div className="text-sm sm:text-headline-md font-bold text-primary dark:text-inverse-primary leading-none truncate">
                 {t.brandTitle}
               </div>
               <div className="flex items-center gap-1 mt-0.5">
-                <span className="material-symbols-outlined text-outline text-[14px]">location_on</span>
-                <span className="font-label-sm text-label-sm text-outline dark:text-outline-variant">
+                <span className="material-symbols-outlined text-outline text-[12px] sm:text-[14px]">location_on</span>
+                <span className="text-[11px] sm:text-label-sm font-label-sm text-outline dark:text-outline-variant truncate">
                   {t.locationTag}
                 </span>
               </div>
@@ -331,14 +331,14 @@ function CreateRequestContent() {
         </div>
 
         {/* Header Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {/* Language Toggle EN | አማ */}
-          <div className="inline-flex items-center p-1 rounded-full border border-outline-variant/50 bg-surface-container-low dark:bg-surface-dim shadow-sm">
+          <div className="inline-flex items-center p-0.5 sm:p-1 rounded-full border border-outline-variant/50 bg-surface-container-low dark:bg-surface-dim shadow-sm">
             <button
               id="langBtnEn"
               type="button"
               onClick={() => setLang('en')}
-              className={`px-2.5 py-0.5 rounded-full text-label-md font-label-md transition-all duration-150 cursor-pointer ${lang === 'en'
+              className={`px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs sm:text-label-md font-label-md transition-all duration-150 cursor-pointer ${lang === 'en'
                   ? 'font-semibold bg-primary-container text-white shadow-xs'
                   : 'font-medium text-on-surface-variant dark:text-outline-variant hover:text-on-surface dark:hover:text-inverse-on-surface'
                 }`}
@@ -349,7 +349,7 @@ function CreateRequestContent() {
               id="langBtnAm"
               type="button"
               onClick={() => setLang('am')}
-              className={`px-2.5 py-0.5 rounded-full text-label-md font-label-md transition-all duration-150 cursor-pointer ${lang === 'am'
+              className={`px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs sm:text-label-md font-label-md transition-all duration-150 cursor-pointer ${lang === 'am'
                   ? 'font-semibold bg-primary-container text-white shadow-xs'
                   : 'font-medium text-on-surface-variant dark:text-outline-variant hover:text-on-surface dark:hover:text-inverse-on-surface'
                 }`}
@@ -364,9 +364,9 @@ function CreateRequestContent() {
             type="button"
             aria-label="Toggle theme"
             onClick={toggleTheme}
-            className="w-10 h-10 rounded-lg border border-outline-variant/60 dark:border-outline/40 flex items-center justify-center text-on-surface-variant dark:text-outline-variant hover:bg-surface-container dark:hover:bg-surface-dim hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150 focus:outline-none cursor-pointer"
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg border border-outline-variant/60 dark:border-outline/40 flex items-center justify-center text-on-surface-variant dark:text-outline-variant hover:bg-surface-container dark:hover:bg-surface-dim hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150 focus:outline-none cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[20px]">
+            <span className="material-symbols-outlined text-[18px] sm:text-[20px]">
               {theme === 'dark' ? 'light_mode' : 'dark_mode'}
             </span>
           </button>
@@ -1011,7 +1011,7 @@ function CreateRequestContent() {
       {/* ============================================================== */}
       <nav
         aria-label="Mobile Navigation"
-        className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-2 h-16 md:hidden bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant/30 dark:border-outline/20 shadow-lg dark:shadow-none"
+        className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-2 h-16 md:hidden bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant/30 dark:border-outline/20 shadow-lg dark:shadow-none pb-[max(0.5rem,env(safe-area-inset-bottom))]"
       >
         <Link
           href="/customer"

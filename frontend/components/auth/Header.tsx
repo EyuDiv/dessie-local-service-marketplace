@@ -11,34 +11,34 @@ export default function Header() {
 
   return (
     <header className="bg-surface-container-lowest dark:bg-inverse-surface docked full-width top-0 sticky z-50 shadow-sm dark:shadow-none border-b border-outline-variant/20 transition-colors duration-200">
-      <div className="w-full max-w-7xl mx-auto px-margin-mobile md:px-margin flex justify-between items-center h-16">
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-margin-mobile md:px-margin flex justify-between items-center h-14 sm:h-16">
         {/* Brand Logo & Identity */}
         <Link
           href="/login"
-          className="text-headline-sm font-headline-sm font-bold text-primary dark:text-inverse-primary flex items-center gap-space-xs tracking-tight"
+          className="text-title-sm sm:text-headline-sm font-headline-sm font-bold text-primary dark:text-inverse-primary flex items-center gap-2 sm:gap-space-xs tracking-tight min-w-0"
         >
-          <div className="w-9 h-9 rounded-lg bg-primary-container text-white flex items-center justify-center font-bold text-lg shadow-sm border border-outline-variant/30">
-            <span className="material-symbols-outlined text-[22px]">handshake</span>
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-primary-container text-white flex items-center justify-center font-bold text-base sm:text-lg shadow-sm border border-outline-variant/30 shrink-0">
+            <span className="material-symbols-outlined text-[20px] sm:text-[22px]">handshake</span>
           </div>
-          <div className="flex flex-col">
-            <span className="leading-tight font-extrabold text-on-surface dark:text-inverse-on-surface">
+          <div className="flex flex-col min-w-0">
+            <span className="leading-tight font-extrabold text-on-surface dark:text-inverse-on-surface truncate text-sm sm:text-base">
               {t.brandTitle}
             </span>
-            <span className="text-label-sm font-label-sm text-outline dark:text-inverse-on-surface/75 font-normal">
+            <span className="hidden sm:block text-[11px] sm:text-label-sm font-label-sm text-outline dark:text-inverse-on-surface/75 font-normal truncate">
               {t.brandSubtitle}
             </span>
           </div>
         </Link>
 
         {/* Trailing Controls: Compact EN | አማ & Theme Toggle */}
-        <div className="flex items-center gap-space-sm">
+        <div className="flex items-center gap-1.5 sm:gap-space-sm shrink-0">
           {/* Language Switcher Segmented Control */}
-          <div className="inline-flex items-center p-1 rounded-full border border-outline-variant/50 bg-surface-container-low dark:bg-surface-dim shadow-sm">
+          <div className="inline-flex items-center p-0.5 sm:p-1 rounded-full border border-outline-variant/50 bg-surface-container-low dark:bg-surface-dim shadow-xs">
             <button
               id="langBtnEn"
               type="button"
               onClick={() => setLang('en')}
-              className={`px-3 py-1 rounded-full text-label-md font-label-md transition-all duration-150 ${
+              className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs sm:text-label-md font-label-md transition-all duration-150 ${
                 lang === 'en'
                   ? 'font-semibold bg-primary-container text-white shadow-xs'
                   : 'font-medium text-on-surface-variant dark:text-inverse-on-surface/80 hover:text-on-surface dark:hover:text-white'
@@ -50,7 +50,7 @@ export default function Header() {
               id="langBtnAm"
               type="button"
               onClick={() => setLang('am')}
-              className={`px-3 py-1 rounded-full text-label-md font-label-md transition-all duration-150 ${
+              className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs sm:text-label-md font-label-md transition-all duration-150 ${
                 lang === 'am'
                   ? 'font-semibold bg-primary-container text-white shadow-xs'
                   : 'font-medium text-on-surface-variant dark:text-inverse-on-surface/80 hover:text-on-surface dark:hover:text-white'
@@ -66,12 +66,12 @@ export default function Header() {
             type="button"
             aria-label="Toggle theme mode"
             onClick={toggleTheme}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant dark:text-inverse-on-surface/85 hover:text-primary dark:hover:text-inverse-primary hover:bg-surface-container dark:hover:bg-surface-dim transition-colors duration-150 cursor-pointer"
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-on-surface-variant dark:text-inverse-on-surface/85 hover:text-primary dark:hover:text-inverse-primary hover:bg-surface-container dark:hover:bg-surface-dim transition-colors duration-150 cursor-pointer"
           >
             {theme === 'dark' ? (
-              <span className="material-symbols-outlined text-[20px]">light_mode</span>
+              <span className="material-symbols-outlined text-[18px] sm:text-[20px]">light_mode</span>
             ) : (
-              <span className="material-symbols-outlined text-[20px]">dark_mode</span>
+              <span className="material-symbols-outlined text-[18px] sm:text-[20px]">dark_mode</span>
             )}
           </button>
         </div>

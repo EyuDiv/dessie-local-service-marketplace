@@ -29,6 +29,12 @@ class EnsureUserIsProvider
             ], 403);
         }
 
+        if ($user->isSuspended()) {
+            return response()->json([
+                'message' => 'Your account has been suspended.',
+            ], 403);
+        }
+
         return $next($request);
     }
 }

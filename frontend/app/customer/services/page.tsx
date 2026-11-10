@@ -268,21 +268,21 @@ function FindServiceContent() {
       {/* ============================================================== */}
       {/* TOP APP BAR (Dessie Service Header)                             */}
       {/* ============================================================== */}
-      <header className="bg-surface-container-lowest dark:bg-inverse-surface border-b border-outline-variant/30 dark:border-outline/20 shadow-sm dark:shadow-none top-0 sticky z-40 w-full px-margin-mobile md:px-margin flex justify-between items-center h-16 transition-colors duration-200">
-        <div className="flex items-center gap-3">
-          <Link href="/customer" className="flex items-center gap-3 focus:outline-none">
-            <div className="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center text-white font-bold shadow-sm">
-              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
+      <header className="bg-surface-container-lowest dark:bg-inverse-surface border-b border-outline-variant/30 dark:border-outline/20 shadow-sm dark:shadow-none top-0 sticky z-40 w-full px-3 sm:px-margin-mobile md:px-margin flex justify-between items-center h-14 sm:h-16 transition-colors duration-200">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Link href="/customer" className="flex items-center gap-2 sm:gap-3 focus:outline-none min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary-container flex items-center justify-center text-white font-bold shadow-sm shrink-0">
+              <span className="material-symbols-outlined text-[20px] sm:text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>
                 handshake
               </span>
             </div>
-            <div>
-              <div className="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary leading-none">
+            <div className="min-w-0">
+              <div className="text-sm sm:text-headline-md font-bold text-primary dark:text-inverse-primary leading-none truncate">
                 {t.brandTitle}
               </div>
               <div className="flex items-center gap-1 mt-0.5">
-                <span className="material-symbols-outlined text-outline text-[14px]">location_on</span>
-                <span className="font-label-sm text-label-sm text-outline dark:text-outline-variant">
+                <span className="material-symbols-outlined text-outline text-[12px] sm:text-[14px]">location_on</span>
+                <span className="text-[11px] sm:text-label-sm font-label-sm text-outline dark:text-outline-variant truncate">
                   {t.locationTag}
                 </span>
               </div>
@@ -291,14 +291,14 @@ function FindServiceContent() {
         </div>
 
         {/* Header Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {/* Language Toggle EN | አማ */}
-          <div className="inline-flex items-center p-1 rounded-full border border-outline-variant/50 bg-surface-container-low dark:bg-surface-dim shadow-sm">
+          <div className="inline-flex items-center p-0.5 sm:p-1 rounded-full border border-outline-variant/50 bg-surface-container-low dark:bg-surface-dim shadow-sm">
             <button
               id="langBtnEn"
               type="button"
               onClick={() => setLang('en')}
-              className={`px-2.5 py-0.5 rounded-full text-label-md font-label-md transition-all duration-150 cursor-pointer ${
+              className={`px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs sm:text-label-md font-label-md transition-all duration-150 cursor-pointer ${
                 lang === 'en'
                   ? 'font-semibold bg-primary-container text-white shadow-xs'
                   : 'font-medium text-on-surface-variant dark:text-outline-variant hover:text-on-surface dark:hover:text-inverse-on-surface'
@@ -310,7 +310,7 @@ function FindServiceContent() {
               id="langBtnAm"
               type="button"
               onClick={() => setLang('am')}
-              className={`px-2.5 py-0.5 rounded-full text-label-md font-label-md transition-all duration-150 cursor-pointer ${
+              className={`px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs sm:text-label-md font-label-md transition-all duration-150 cursor-pointer ${
                 lang === 'am'
                   ? 'font-semibold bg-primary-container text-white shadow-xs'
                   : 'font-medium text-on-surface-variant dark:text-outline-variant hover:text-on-surface dark:hover:text-inverse-on-surface'
@@ -326,9 +326,9 @@ function FindServiceContent() {
             type="button"
             aria-label="Toggle theme"
             onClick={toggleTheme}
-            className="w-10 h-10 rounded-lg border border-outline-variant/60 dark:border-outline/40 flex items-center justify-center text-on-surface-variant dark:text-outline-variant hover:bg-surface-container dark:hover:bg-surface-dim hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150 focus:outline-none cursor-pointer"
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg border border-outline-variant/60 dark:border-outline/40 flex items-center justify-center text-on-surface-variant dark:text-outline-variant hover:bg-surface-container dark:hover:bg-surface-dim hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150 focus:outline-none cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[20px]">
+            <span className="material-symbols-outlined text-[18px] sm:text-[20px]">
               {theme === 'dark' ? 'light_mode' : 'dark_mode'}
             </span>
           </button>
@@ -426,20 +426,20 @@ function FindServiceContent() {
         {/* ============================================================== */}
         {/* MAIN CONTENT CANVAS                                             */}
         {/* ============================================================== */}
-        <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full pb-24 md:pb-8">
+        <main className="flex-1 p-3 sm:p-4 md:p-8 max-w-7xl mx-auto w-full pb-28 md:pb-8">
           {/* PAGE HEADER */}
-          <section className="mb-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <section className="mb-4 sm:mb-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 sm:gap-3">
               <div>
                 <h1
                   id="pageTitle"
-                  className="font-headline-xl text-headline-xl text-on-surface dark:text-inverse-on-surface tracking-tight"
+                  className="font-headline-xl text-xl sm:text-2xl md:text-headline-xl text-on-surface dark:text-inverse-on-surface tracking-tight font-extrabold"
                 >
                   {t.findServiceTitle}
                 </h1>
                 <p
                   id="pageSubtitle"
-                  className="font-body-md text-body-md text-on-surface-variant dark:text-outline-variant mt-1"
+                  className="font-body-sm text-xs sm:text-body-sm md:text-body-md text-on-surface-variant dark:text-outline-variant mt-0.5 sm:mt-1"
                 >
                   {t.findServiceSubtitle}
                 </p>
@@ -448,10 +448,10 @@ function FindServiceContent() {
               {/* Verified stats pill */}
               <div
                 id="verifiedNetworkPill"
-                className="inline-flex items-center gap-2 self-start md:self-auto px-3.5 py-1.5 bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/40 rounded-full shadow-xs text-outline"
+                className="inline-flex items-center gap-1.5 sm:gap-2 self-start md:self-auto px-2.5 py-1 sm:px-3.5 sm:py-1.5 bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/40 rounded-full shadow-xs text-outline"
               >
-                <span className="w-2.5 h-2.5 rounded-full bg-primary-container"></span>
-                <span className="font-label-md text-label-md text-on-surface-variant dark:text-outline-variant">
+                <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-primary-container"></span>
+                <span className="font-label-sm sm:font-label-md text-xs sm:text-label-md text-on-surface-variant dark:text-outline-variant font-medium">
                   {t.verifiedNetworkPill}
                 </span>
               </div>
@@ -459,13 +459,13 @@ function FindServiceContent() {
           </section>
 
           {/* SEARCH BAR */}
-          <section className="mb-5">
+          <section className="mb-4 sm:mb-5">
             <form
               onSubmit={handleSearchSubmit}
-              className="relative bg-surface-container-lowest dark:bg-inverse-surface rounded-xl shadow-xs border border-outline-variant/40 p-1.5 flex items-center transition-all focus-within:ring-2 focus-within:ring-primary-container focus-within:border-primary-container gap-2"
+              className="relative bg-surface-container-lowest dark:bg-inverse-surface rounded-xl shadow-xs border border-outline-variant/40 p-1 sm:p-1.5 flex items-center transition-all focus-within:ring-2 focus-within:ring-primary-container focus-within:border-primary-container gap-1 sm:gap-2"
             >
-              <div className="pl-3 flex items-center pointer-events-none text-outline shrink-0">
-                <span className="material-symbols-outlined text-[24px]">search</span>
+              <div className="pl-2 sm:pl-3 flex items-center pointer-events-none text-outline shrink-0">
+                <span className="material-symbols-outlined text-[20px] sm:text-[24px]">search</span>
               </div>
               <input
                 id="searchInput"
@@ -473,43 +473,43 @@ function FindServiceContent() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t.searchPlaceholder}
-                className="w-full bg-transparent border-none text-on-surface dark:text-inverse-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none px-2 py-2 outline-none"
+                className="w-full min-w-0 bg-transparent border-none text-on-surface dark:text-inverse-on-surface font-body-sm sm:font-body-md text-xs sm:text-body-md placeholder:text-outline focus:outline-none px-1.5 sm:px-2 py-1.5 sm:py-2 outline-none"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
                   aria-label="Clear search"
-                  className="p-1.5 text-outline hover:text-on-surface dark:hover:text-inverse-on-surface cursor-pointer shrink-0"
+                  className="p-1 sm:p-1.5 text-outline hover:text-on-surface dark:hover:text-inverse-on-surface cursor-pointer shrink-0"
                 >
-                  <span className="material-symbols-outlined text-[20px]">close</span>
+                  <span className="material-symbols-outlined text-[18px] sm:text-[20px]">close</span>
                 </button>
               )}
               <button
                 id="searchSubmitBtn"
                 type="submit"
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary-container hover:bg-primary text-white rounded-lg font-label-md text-label-md font-bold transition-colors shadow-xs cursor-pointer shrink-0"
+                className="inline-flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 bg-primary-container hover:bg-primary text-white rounded-lg font-label-md text-xs sm:text-label-md font-bold transition-colors shadow-xs cursor-pointer shrink-0"
               >
-                <span className="material-symbols-outlined text-[18px]">search</span>
+                <span className="material-symbols-outlined text-[16px] sm:text-[18px]">search</span>
                 <span>{t.searchBtn}</span>
               </button>
             </form>
           </section>
 
           {/* SERVICE CATEGORY FILTER CHIPS (Loaded from GET /api/services) */}
-          <section className="mb-6">
+          <section className="mb-4 sm:mb-6">
             <div
               id="servicePillsContainer"
-              className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none"
+              className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-2 scrollbar-none"
             >
               {/* "All Services" Pill */}
               <button
                 id="pillAllServices"
                 type="button"
                 onClick={() => setSelectedServiceId(null)}
-                className={`px-4 py-2 rounded-full font-label-md text-label-md whitespace-nowrap transition-colors cursor-pointer shadow-xs ${
+                className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-label-sm sm:font-label-md text-xs sm:text-label-md whitespace-nowrap transition-colors cursor-pointer shadow-xs ${
                   selectedServiceId === null
-                    ? 'bg-primary-container text-white'
+                    ? 'bg-primary-container text-white font-semibold'
                     : 'bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/60 dark:border-outline/40 text-on-surface-variant dark:text-outline-variant hover:border-primary-container hover:text-primary-container dark:hover:text-inverse-primary'
                 }`}
               >
@@ -525,9 +525,9 @@ function FindServiceContent() {
                   onClick={() =>
                     setSelectedServiceId(selectedServiceId === svc.id ? null : svc.id)
                   }
-                  className={`px-4 py-2 rounded-full font-label-md text-label-md whitespace-nowrap transition-colors cursor-pointer shadow-xs ${
+                  className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-label-sm sm:font-label-md text-xs sm:text-label-md whitespace-nowrap transition-colors cursor-pointer shadow-xs ${
                     selectedServiceId === svc.id
-                      ? 'bg-primary-container text-white'
+                      ? 'bg-primary-container text-white font-semibold'
                       : 'bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/60 dark:border-outline/40 text-on-surface-variant dark:text-outline-variant hover:border-primary-container hover:text-primary-container dark:hover:text-inverse-primary'
                   }`}
                 >
@@ -538,13 +538,13 @@ function FindServiceContent() {
           </section>
 
           {/* BACKEND-SUPPORTED FILTERS ROW */}
-          <section className="mb-6 p-4 bg-surface-container-lowest dark:bg-inverse-surface rounded-xl border border-outline-variant/40 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-3">
+          <section className="mb-4 sm:mb-6 p-3 sm:p-4 bg-surface-container-lowest dark:bg-inverse-surface rounded-xl border border-outline-variant/40 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-4 flex-1">
               {/* Location Filter */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <label
                   htmlFor="locationFilter"
-                  className="font-label-md text-label-md text-on-surface-variant dark:text-outline-variant shrink-0"
+                  className="w-24 sm:w-auto font-label-md text-xs sm:text-body-sm text-on-surface-variant dark:text-outline-variant shrink-0 font-medium"
                 >
                   {t.filterLocationLabel}
                 </label>
@@ -552,7 +552,7 @@ function FindServiceContent() {
                   id="locationFilter"
                   value={selectedLocation}
                   onChange={(e) => setSelectedLocation(e.target.value)}
-                  className="h-10 px-3 py-1.5 rounded-lg border border-outline-variant/60 dark:border-outline/40 bg-surface dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface font-body-sm text-body-sm focus:ring-2 focus:ring-primary-container focus:border-primary-container outline-none cursor-pointer"
+                  className="flex-1 sm:flex-none h-9 sm:h-10 px-3 py-1.5 rounded-lg border border-outline-variant/60 dark:border-outline/40 bg-surface dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-xs sm:text-body-sm focus:ring-2 focus:ring-primary-container focus:border-primary-container outline-none cursor-pointer"
                 >
                   <option value="all">{t.optAllLocations}</option>
                   {locationOptions.map((loc) => (
@@ -564,10 +564,10 @@ function FindServiceContent() {
               </div>
 
               {/* Availability Filter */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <label
                   htmlFor="availabilityFilter"
-                  className="font-label-md text-label-md text-on-surface-variant dark:text-outline-variant shrink-0"
+                  className="w-24 sm:w-auto font-label-md text-xs sm:text-body-sm text-on-surface-variant dark:text-outline-variant shrink-0 font-medium"
                 >
                   {t.filterAvailabilityLabel}
                 </label>
@@ -575,7 +575,7 @@ function FindServiceContent() {
                   id="availabilityFilter"
                   value={selectedAvailability}
                   onChange={(e) => setSelectedAvailability(e.target.value)}
-                  className="h-10 px-3 py-1.5 rounded-lg border border-outline-variant/60 dark:border-outline/40 bg-surface dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface font-body-sm text-body-sm focus:ring-2 focus:ring-primary-container focus:border-primary-container outline-none cursor-pointer"
+                  className="flex-1 sm:flex-none h-9 sm:h-10 px-3 py-1.5 rounded-lg border border-outline-variant/60 dark:border-outline/40 bg-surface dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-xs sm:text-body-sm focus:ring-2 focus:ring-primary-container focus:border-primary-container outline-none cursor-pointer"
                 >
                   <option value="all">{t.optAllAvailability}</option>
                   <option value="available">{t.optAvailable}</option>
@@ -586,10 +586,10 @@ function FindServiceContent() {
             </div>
 
             {/* Dynamic Results Counter */}
-            <div className="text-left md:text-right">
+            <div className="pt-2.5 sm:pt-0 border-t sm:border-t-0 border-outline-variant/20 flex items-center justify-between sm:justify-end text-left md:text-right shrink-0">
               <p
                 id="resultsCountDisplay"
-                className="font-label-lg text-label-lg text-on-surface dark:text-inverse-on-surface"
+                className="font-label-sm sm:font-label-lg text-xs sm:text-label-lg text-on-surface dark:text-inverse-on-surface"
               >
                 <span>{t.showingPrefix}</span>{' '}
                 <strong id="dynamicCount" className="text-primary-container dark:text-inverse-primary font-bold">
@@ -753,27 +753,27 @@ function FindServiceContent() {
                   return (
                     <article
                       key={provider.id}
-                      className="provider-card bg-surface-container-lowest dark:bg-inverse-surface rounded-xl border border-outline-variant/30 dark:border-outline/20 p-5 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between overflow-hidden"
+                      className="provider-card bg-surface-container-lowest dark:bg-inverse-surface rounded-xl border border-outline-variant/30 dark:border-outline/20 p-3.5 sm:p-5 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between overflow-hidden"
                     >
                       <div className="w-full min-w-0">
                         {/* Header: Service Icon + Business Name + Verified Badge */}
-                        <div className="flex items-start justify-between gap-3 mb-3">
-                          <div className="flex items-start gap-3 min-w-0 flex-1">
-                            <div className="w-12 h-12 rounded-xl bg-primary-container/15 text-primary-container dark:text-inverse-primary flex items-center justify-center font-bold text-lg border border-primary-container/20 shrink-0 mt-0.5">
-                              <span className="material-symbols-outlined text-[26px]">
+                        <div className="flex items-start justify-between gap-2.5 sm:gap-3 mb-2.5 sm:mb-3">
+                          <div className="flex items-start gap-2.5 sm:gap-3 min-w-0 flex-1">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary-container/15 text-primary-container dark:text-inverse-primary flex items-center justify-center font-bold text-base sm:text-lg border border-primary-container/20 shrink-0 mt-0.5">
+                              <span className="material-symbols-outlined text-[22px] sm:text-[26px]">
                                 {serviceIcon}
                               </span>
                             </div>
                             <div className="min-w-0 flex-1">
                               <h3
-                                className="font-headline-sm text-base sm:text-lg font-bold text-on-surface dark:text-inverse-on-surface leading-snug break-words line-clamp-2"
+                                className="font-headline-sm text-sm sm:text-base md:text-lg font-bold text-on-surface dark:text-inverse-on-surface leading-snug break-words line-clamp-2"
                                 title={provider.business_name}
                               >
                                 {provider.business_name}
                               </h3>
                               {provider.experience_years > 0 && (
-                                <p className="font-body-sm text-body-sm text-on-surface-variant dark:text-outline-variant flex items-center gap-1 mt-0.5">
-                                  <span className="material-symbols-outlined text-[14px]">timeline</span>
+                                <p className="font-body-sm text-xs sm:text-body-sm text-on-surface-variant dark:text-outline-variant flex items-center gap-1 mt-0.5">
+                                  <span className="material-symbols-outlined text-[13px] sm:text-[14px]">timeline</span>
                                   <span>
                                     {provider.experience_years} {t.experienceYearsSuffix}
                                   </span>
@@ -783,9 +783,9 @@ function FindServiceContent() {
                           </div>
 
                           {/* Verified Badge */}
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-container/10 text-primary-container dark:text-inverse-primary border border-primary-container/20 shrink-0 self-start">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-2xs sm:text-xs font-semibold bg-primary-container/10 text-primary-container dark:text-inverse-primary border border-primary-container/20 shrink-0 self-start">
                             <span
-                              className="material-symbols-outlined text-[14px]"
+                              className="material-symbols-outlined text-[12px] sm:text-[14px]"
                               style={{ fontVariationSettings: "'FILL' 1" }}
                             >
                               verified
@@ -796,33 +796,33 @@ function FindServiceContent() {
 
                         {/* Description snippet if available */}
                         {provider.description && (
-                          <p className="text-body-sm font-body-sm text-on-surface-variant dark:text-outline-variant line-clamp-2 mt-2 break-words">
+                          <p className="text-xs sm:text-body-sm font-body-sm text-on-surface-variant dark:text-outline-variant line-clamp-2 mt-1.5 sm:mt-2 break-words">
                             {provider.description}
                           </p>
                         )}
 
                         {/* Service & Neighborhood Tags */}
-                        <div className="flex flex-wrap items-center gap-2 mt-3">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2.5 sm:mt-3">
                           {provider.services?.map((svc) => (
                             <span
                               key={svc.id}
-                              className="px-2.5 py-1 rounded-md text-xs font-semibold bg-surface-container dark:bg-surface-dim text-on-surface dark:text-inverse-on-surface border border-outline-variant/20 max-w-full truncate"
+                              className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-2xs sm:text-xs font-semibold bg-surface-container dark:bg-surface-dim text-on-surface dark:text-inverse-on-surface border border-outline-variant/20 max-w-full truncate"
                               title={svc.name}
                             >
                               {svc.name}
                             </span>
                           ))}
-                          <span className="px-2.5 py-1 rounded-md text-xs text-outline dark:text-outline-variant flex items-center gap-1 bg-surface-container-low dark:bg-surface-dim/40 border border-outline-variant/20 max-w-full">
-                            <span className="material-symbols-outlined text-[13px] shrink-0">location_on</span>
+                          <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-2xs sm:text-xs text-outline dark:text-outline-variant flex items-center gap-1 bg-surface-container-low dark:bg-surface-dim/40 border border-outline-variant/20 max-w-full">
+                            <span className="material-symbols-outlined text-[12px] sm:text-[13px] shrink-0">location_on</span>
                             <span className="truncate">{provider.location}, Dessie</span>
                           </span>
                           {provider.phone && (
                             <a
                               href={`tel:${provider.phone}`}
-                              className="px-2.5 py-1 rounded-md text-xs text-primary-container dark:text-inverse-primary font-mono flex items-center gap-1 bg-primary-container/10 border border-primary-container/20 hover:underline shrink-0"
+                              className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-2xs sm:text-xs text-primary-container dark:text-inverse-primary font-mono flex items-center gap-1 bg-primary-container/10 border border-primary-container/20 hover:underline shrink-0"
                               title={t.callProviderBtn}
                             >
-                              <span className="material-symbols-outlined text-[13px] shrink-0">call</span>
+                              <span className="material-symbols-outlined text-[12px] sm:text-[13px] shrink-0">call</span>
                               <span>{provider.phone}</span>
                             </a>
                           )}
@@ -830,23 +830,23 @@ function FindServiceContent() {
                       </div>
 
                       {/* Footer of Card: Availability & Profile Action */}
-                      <div className="mt-5 pt-4 border-t border-outline-variant/30 dark:border-outline/20 flex items-center justify-between gap-2">
+                      <div className="mt-3.5 pt-3 sm:mt-5 sm:pt-4 border-t border-outline-variant/30 dark:border-outline/20 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2">
                         {/* Availability Status */}
                         {provider.availability_status === 'available' && (
-                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary-container dark:text-inverse-primary shrink-0">
-                            <span className="w-2 h-2 rounded-full bg-primary-container animate-pulse shrink-0"></span>
+                          <span className="inline-flex items-center gap-1.5 text-2xs sm:text-xs font-semibold text-primary-container dark:text-inverse-primary shrink-0">
+                            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary-container animate-pulse shrink-0"></span>
                             <span>{t.statusAvailable}</span>
                           </span>
                         )}
                         {provider.availability_status === 'busy' && (
-                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-secondary shrink-0">
-                            <span className="w-2 h-2 rounded-full bg-secondary shrink-0"></span>
+                          <span className="inline-flex items-center gap-1.5 text-2xs sm:text-xs font-semibold text-secondary shrink-0">
+                            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-secondary shrink-0"></span>
                             <span>{t.statusBusy}</span>
                           </span>
                         )}
                         {provider.availability_status === 'offline' && (
-                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-outline shrink-0">
-                            <span className="w-2 h-2 rounded-full bg-outline shrink-0"></span>
+                          <span className="inline-flex items-center gap-1.5 text-2xs sm:text-xs font-semibold text-outline shrink-0">
+                            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-outline shrink-0"></span>
                             <span>{t.statusOffline}</span>
                           </span>
                         )}
@@ -854,10 +854,10 @@ function FindServiceContent() {
                         {/* View Profile Action Link (navigation only, per specification) */}
                         <Link
                           href={`/customer/providers/${provider.id}`}
-                          className="px-3.5 py-1.5 rounded-lg bg-surface-container-high dark:bg-surface-dim hover:bg-primary-container hover:text-white dark:hover:bg-primary-container text-on-surface dark:text-inverse-on-surface font-label-md text-label-md transition-colors flex items-center gap-1 shadow-2xs shrink-0"
+                          className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-lg bg-surface-container-high dark:bg-surface-dim hover:bg-primary-container hover:text-white dark:hover:bg-primary-container text-on-surface dark:text-inverse-on-surface font-label-md text-xs sm:text-label-md transition-colors flex items-center gap-1 shadow-2xs shrink-0 ml-auto sm:ml-0"
                         >
                           <span>{t.btnViewProfile}</span>
-                          <span className="material-symbols-outlined text-[16px] shrink-0">arrow_forward</span>
+                          <span className="material-symbols-outlined text-[14px] sm:text-[16px] shrink-0">arrow_forward</span>
                         </Link>
                       </div>
                     </article>
@@ -874,7 +874,7 @@ function FindServiceContent() {
       {/* ============================================================== */}
       <nav
         aria-label="Mobile Navigation"
-        className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-2 h-16 md:hidden bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant/30 dark:border-outline/20 shadow-lg dark:shadow-none"
+        className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-2 h-16 md:hidden bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant/30 dark:border-outline/20 shadow-lg dark:shadow-none pb-[max(0.5rem,env(safe-area-inset-bottom))]"
       >
         {/* Tab 1: Dashboard */}
         <Link

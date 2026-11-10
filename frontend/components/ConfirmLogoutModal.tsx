@@ -72,23 +72,23 @@ export default function ConfirmLogoutModal({
       }}
     >
       <div
-        className="bg-surface-container-lowest dark:bg-inverse-surface rounded-2xl border border-outline-variant/40 dark:border-outline/30 shadow-2xl max-w-md w-full p-6 space-y-5 transition-all transform scale-100"
+        className="bg-surface-container-lowest dark:bg-inverse-surface rounded-2xl border border-outline-variant/40 dark:border-outline/30 shadow-2xl max-w-md w-full p-4 sm:p-6 space-y-4 sm:space-y-5 transition-all transform scale-100"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-full bg-error/15 dark:bg-error/25 text-error flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-[26px]">logout</span>
+        <div className="flex items-start gap-3 sm:gap-4">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-error/15 dark:bg-error/25 text-error flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-[22px] sm:text-[26px]">logout</span>
           </div>
           <div className="flex-1 min-w-0">
             <h3
               id="logout-dialog-title"
-              className="text-title-lg font-bold text-on-surface dark:text-inverse-on-surface"
+              className="text-base sm:text-title-lg font-bold text-on-surface dark:text-inverse-on-surface"
             >
               {displayTitle}
             </h3>
             <p
               id="logout-dialog-desc"
-              className="text-body-md text-outline dark:text-inverse-on-surface/75 mt-1.5 leading-relaxed"
+              className="text-xs sm:text-body-md text-outline dark:text-inverse-on-surface/75 mt-1 sm:mt-1.5 leading-relaxed"
             >
               {displayMessage}
             </p>

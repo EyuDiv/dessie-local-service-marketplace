@@ -16,6 +16,15 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     /**
+     * Default attribute values.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'status' => 'active',
+    ];
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
@@ -26,6 +35,8 @@ class User extends Authenticatable
         'phone',
         'password',
         'role',
+        'status',
+        'last_login_at',
     ];
 
     /**
@@ -47,6 +58,7 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'last_login_at' => 'datetime',
         ];
     }
 
@@ -72,6 +84,22 @@ class User extends Authenticatable
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class, 'customer_id');
+    }
+
+    /**
+     * Get the complaints submitted by this user.
+     */
+    public function complaints(): HasMany
+    {
+        return $this->hasMany(Complaint::class, 'user_id');
+    }
+
+    /**
+     * Check if user account is suspended.
+     */
+    public function isSuspended(): bool
+    {
+        return $this->status === 'suspended';
     }
 
     /**
