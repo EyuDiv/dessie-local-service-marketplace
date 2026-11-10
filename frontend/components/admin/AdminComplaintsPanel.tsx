@@ -14,22 +14,24 @@ import {
 interface AdminComplaintsPanelProps {
   lang: Language;
   onComplaintUpdated?: () => void;
+  initialComplaints?: AdminComplaintItem[] | null;
 }
 
 type ComplaintFilter = 'all' | ComplaintStatus;
 
 const COMPLAINT_STATUS_STYLES: Record<ComplaintStatus, string> = {
-  pending: 'bg-secondary/15 text-secondary border-secondary/30',
-  resolved: 'bg-primary-container/15 text-primary-container border-primary-container/30',
-  dismissed: 'bg-surface-container-high dark:bg-surface-dim text-outline border-outline-variant/40',
+  pending: 'bg-secondary/15 text-amber-900 dark:text-amber-300 border-secondary/30',
+  resolved: 'bg-primary-container/15 text-emerald-800 dark:text-emerald-300 border-primary-container/30',
+  dismissed: 'bg-surface-container-high dark:bg-surface-dim text-gray-700 dark:text-gray-300 border-outline-variant/40',
 };
 
 export default function AdminComplaintsPanel({
   lang,
   onComplaintUpdated,
+  initialComplaints,
 }: AdminComplaintsPanelProps) {
-  const [complaints, setComplaints] = useState<AdminComplaintItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [complaints, setComplaints] = useState<AdminComplaintItem[]>(initialComplaints ?? []);
+  const [loading, setLoading] = useState(initialComplaints === null || initialComplaints === undefined);
   const [error, setError] = useState<string | null>(null);
 
   const [statusFilter, setStatusFilter] = useState<ComplaintFilter>('all');
@@ -56,6 +58,9 @@ export default function AdminComplaintsPanel({
   }, [lang]);
 
   useEffect(() => {
+    if (initialComplaints !== null && initialComplaints !== undefined) {
+      return;
+    }
     let active = true;
     getAdminComplaints()
       .then((items) => {
@@ -74,7 +79,7 @@ export default function AdminComplaintsPanel({
     return () => {
       active = false;
     };
-  }, []);
+  }, [initialComplaints]);
 
   const counts = useMemo(() => {
     return {

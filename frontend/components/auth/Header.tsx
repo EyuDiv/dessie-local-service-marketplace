@@ -24,7 +24,7 @@ export default function Header() {
             <span className="leading-tight font-extrabold text-on-surface dark:text-inverse-on-surface truncate text-sm sm:text-base">
               {t.brandTitle}
             </span>
-            <span className="hidden sm:block text-[11px] sm:text-label-sm font-label-sm text-outline dark:text-inverse-on-surface/75 font-normal truncate">
+            <span className="hidden sm:block text-xs font-label-sm text-gray-700 dark:text-gray-300 font-normal truncate">
               {t.brandSubtitle}
             </span>
           </div>
@@ -40,8 +40,8 @@ export default function Header() {
               onClick={() => setLang('en')}
               className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs sm:text-label-md font-label-md transition-all duration-150 ${
                 lang === 'en'
-                  ? 'font-semibold bg-primary-container text-white shadow-xs'
-                  : 'font-medium text-on-surface-variant dark:text-inverse-on-surface/80 hover:text-on-surface dark:hover:text-white'
+                  ? 'font-semibold bg-primary-container dark:bg-emerald-700 text-white shadow-xs'
+                  : 'font-medium text-gray-700 dark:text-gray-200 hover:text-on-surface dark:hover:text-white'
               }`}
             >
               EN
@@ -52,8 +52,8 @@ export default function Header() {
               onClick={() => setLang('am')}
               className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs sm:text-label-md font-label-md transition-all duration-150 ${
                 lang === 'am'
-                  ? 'font-semibold bg-primary-container text-white shadow-xs'
-                  : 'font-medium text-on-surface-variant dark:text-inverse-on-surface/80 hover:text-on-surface dark:hover:text-white'
+                  ? 'font-semibold bg-primary-container dark:bg-emerald-700 text-white shadow-xs'
+                  : 'font-medium text-gray-700 dark:text-gray-200 hover:text-on-surface dark:hover:text-white'
               }`}
             >
               አማ
@@ -66,7 +66,7 @@ export default function Header() {
             type="button"
             aria-label="Toggle theme mode"
             onClick={toggleTheme}
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-on-surface-variant dark:text-inverse-on-surface/85 hover:text-primary dark:hover:text-inverse-primary hover:bg-surface-container dark:hover:bg-surface-dim transition-colors duration-150 cursor-pointer"
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-gray-700 dark:text-gray-200 hover:text-primary dark:hover:text-inverse-primary hover:bg-surface-container dark:hover:bg-surface-dim transition-colors duration-150 cursor-pointer"
           >
             {theme === 'dark' ? (
               <span className="material-symbols-outlined text-[18px] sm:text-[20px]">light_mode</span>

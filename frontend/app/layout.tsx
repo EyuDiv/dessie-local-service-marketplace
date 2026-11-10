@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
-import { Plus_Jakarta_Sans } from 'next/font/google';
+import { Plus_Jakarta_Sans, Noto_Sans_Ethiopic } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import { LanguageProvider } from '@/components/LanguageContext';
 import { ThemeProvider } from '@/components/ThemeContext';
@@ -9,6 +10,21 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
   weight: ['300', '400', '500', '600', '700', '800'],
   display: 'swap',
+});
+
+const notoSansEthiopic = Noto_Sans_Ethiopic({
+  variable: '--font-noto-ethiopic',
+  subsets: ['ethiopic'],
+  weight: ['300', '400', '500', '600', '700'],
+  display: 'swap',
+  preload: false,
+});
+
+const materialSymbols = localFont({
+  src: './fonts/material-symbols-outlined.woff2',
+  variable: '--font-material-symbols',
+  display: 'swap',
+  weight: '100 700',
 });
 
 export const metadata: Metadata = {
@@ -33,17 +49,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className="light">
-      <head>
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@300;400;500;600;700&display=swap"
-        />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        />
-      </head>
-      <body className={`${plusJakartaSans.variable} antialiased`}>
+      <body
+        className={`${plusJakartaSans.variable} ${notoSansEthiopic.variable} ${materialSymbols.variable} antialiased`}
+      >
         <ThemeProvider>
           <LanguageProvider>{children}</LanguageProvider>
         </ThemeProvider>

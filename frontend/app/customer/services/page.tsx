@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo, useCallback, Suspense } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef, useSyncExternalStore, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import ConfirmLogoutModal from '@/components/ConfirmLogoutModal';
@@ -9,6 +9,104 @@ import { useTheme } from '@/components/ThemeContext';
 import { getCurrentUser, logoutUser, User, getStoredToken } from '@/lib/api/auth';
 import { getServices, Service } from '@/lib/api/services';
 import { getProviders, Provider } from '@/lib/api/providers';
+
+const SERVICES_CACHE_KEY = 'dessie_services_cache';
+const EMPTY_SERVICES: Service[] = [];
+
+let lastRawAuthUser: string | null = null;
+let lastParsedAuthUser: User | null = null;
+let lastRawServices: string | null = null;
+let lastParsedServices: Service[] = EMPTY_SERVICES;
+
+function subscribeStorage(callback: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener('storage', callback);
+  return () => window.removeEventListener('storage', callback);
+}
+
+function getCachedCustomerSnapshot(): User | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem('dessie_auth_user');
+    if (raw === lastRawAuthUser) return lastParsedAuthUser;
+    lastRawAuthUser = raw;
+    if (!raw) {
+      lastParsedAuthUser = null;
+      return null;
+    }
+    const parsed = JSON.parse(raw) as User;
+    lastParsedAuthUser = parsed?.role === 'customer' ? parsed : null;
+    return lastParsedAuthUser;
+  } catch {
+    lastRawAuthUser = null;
+    lastParsedAuthUser = null;
+    return null;
+  }
+}
+
+function getCachedCustomerServerSnapshot(): User | null {
+  return null;
+}
+
+function getCachedServicesSnapshot(): Service[] {
+  if (typeof window === 'undefined') return EMPTY_SERVICES;
+  try {
+    const raw = localStorage.getItem(SERVICES_CACHE_KEY);
+    if (raw === lastRawServices) return lastParsedServices;
+    lastRawServices = raw;
+    if (!raw) {
+      lastParsedServices = EMPTY_SERVICES;
+      return EMPTY_SERVICES;
+    }
+    const parsed = JSON.parse(raw);
+    lastParsedServices = Array.isArray(parsed) ? (parsed as Service[]) : EMPTY_SERVICES;
+    return lastParsedServices;
+  } catch {
+    lastRawServices = null;
+    lastParsedServices = EMPTY_SERVICES;
+    return EMPTY_SERVICES;
+  }
+}
+
+function getCachedServicesServerSnapshot(): Service[] {
+  return EMPTY_SERVICES;
+}
+
+function subscribePopState(callback: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener('popstate', callback);
+  return () => window.removeEventListener('popstate', callback);
+}
+
+function getWindowSearchSnapshot(): string {
+  if (typeof window === 'undefined') return '';
+  return window.location.search;
+}
+
+function getWindowSearchServerSnapshot(): string {
+  return '';
+}
+
+function SearchParamsSync({
+  onUrlChange,
+}: {
+  onUrlChange: (q: string, service: string) => void;
+}) {
+  const searchParams = useSearchParams();
+  const q = (searchParams?.get('q') || searchParams?.get('search') || '').trim();
+  const service = (searchParams?.get('service') || '').trim();
+  const prevRef = useRef<{ q: string; service: string } | null>(null);
+
+  useEffect(() => {
+    const prev = prevRef.current;
+    if (prev && prev.q === q && prev.service === service) return;
+    prevRef.current = { q, service };
+    if (!prev) return;
+    Promise.resolve().then(() => onUrlChange(q, service));
+  }, [q, service, onUrlChange]);
+
+  return null;
+}
 
 // Helper to map service names to Material Symbols icon names
 const getServiceIcon = (serviceName?: string): string => {
@@ -24,6 +122,19 @@ const getServiceIcon = (serviceName?: string): string => {
   if (name.includes('carpent') || name.includes('wood')) return 'carpenter';
   return 'handyman';
 };
+
+const DEFAULT_FALLBACK_CATEGORIES = [
+  { id: 'fallback-plumbing', name: 'Plumbing', query: 'plumbing' },
+  { id: 'fallback-electrical', name: 'Electrical', query: 'electrical' },
+  { id: 'fallback-cleaning', name: 'Home Cleaning', query: 'cleaning' },
+] as const;
+
+const getCategoryPillClassName = (isActive: boolean): string =>
+  `px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-label-sm sm:font-label-md text-xs sm:text-label-md whitespace-nowrap transition-colors cursor-pointer shadow-xs ${
+    isActive
+      ? 'bg-primary-container dark:bg-emerald-700 text-white font-semibold'
+      : 'bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/60 dark:border-outline/40 text-gray-700 dark:text-gray-300 hover:border-primary-container hover:text-primary-container dark:hover:text-inverse-primary'
+  }`;
 
 // Known Dessie neighborhoods for filter options
 const DESSIE_NEIGHBORHOODS = [
@@ -102,37 +213,101 @@ const matchesProviderSearch = (provider: Provider, rawQuery: string): boolean =>
 
 function FindServiceContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { lang, setLang, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
 
+  // Synchronously hydrated local caches for instant first-frame shell population
+  const cachedUser = useSyncExternalStore(
+    subscribeStorage,
+    getCachedCustomerSnapshot,
+    getCachedCustomerServerSnapshot
+  );
+  const cachedServices = useSyncExternalStore(
+    subscribeStorage,
+    getCachedServicesSnapshot,
+    getCachedServicesServerSnapshot
+  );
+  const initialWindowSearch = useSyncExternalStore(
+    subscribePopState,
+    getWindowSearchSnapshot,
+    getWindowSearchServerSnapshot
+  );
+
   // Authentication & User State
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [freshUser, setFreshUser] = useState<User | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Data States
-  const [services, setServices] = useState<Service[]>([]);
+  const [freshServices, setFreshServices] = useState<Service[] | null>(null);
   const [providers, setProviders] = useState<Provider[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [dataError, setDataError] = useState(false);
 
-  // Filter States
-  const [selectedServiceId, setSelectedServiceId] = useState<number | null>(null);
+  // Filter & URL States
+  const [navUrlParams, setNavUrlParams] = useState<{ q: string; service: string } | null>(null);
+  const [searchOverride, setSearchOverride] = useState<string | null>(null);
+  const [serviceOverride, setServiceOverride] = useState<number | null | undefined>(undefined);
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [selectedAvailability, setSelectedAvailability] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Read URL search params on mount
-  useEffect(() => {
-    const qParam = searchParams?.get('q') || searchParams?.get('search');
-    if (qParam && qParam.trim()) {
-      setSearchQuery(qParam.trim());
-    }
-  }, [searchParams]);
+  const currentUser = freshUser ?? cachedUser;
+  const services = freshServices ?? cachedServices;
 
-  // 1. Authenticate customer
+  const { initialUrlQ, initialUrlService } = useMemo(() => {
+    const params = new URLSearchParams(initialWindowSearch);
+    return {
+      initialUrlQ: (params.get('q') || params.get('search') || '').trim(),
+      initialUrlService: (params.get('service') || '').trim(),
+    };
+  }, [initialWindowSearch]);
+
+  const effectiveUrlQ = navUrlParams ? navUrlParams.q : initialUrlQ;
+  const effectiveUrlService = navUrlParams ? navUrlParams.service : initialUrlService;
+
+  const searchQuery = searchOverride ?? effectiveUrlQ;
+
+  const selectedServiceId = useMemo(() => {
+    if (serviceOverride !== undefined) return serviceOverride;
+    if (!effectiveUrlService || services.length === 0) return null;
+    const match = services.find((s) => s.name.toLowerCase() === effectiveUrlService.toLowerCase());
+    return match ? match.id : null;
+  }, [serviceOverride, effectiveUrlService, services]);
+
+  const loadProviders = useCallback(
+    async (serviceId: number | null, location: string, availability: string) => {
+      setDataLoading(true);
+      setDataError(false);
+      try {
+        const data = await getProviders({
+          service_id: serviceId ?? undefined,
+          location: location !== 'all' ? location : undefined,
+          availability_status: availability !== 'all' ? availability : undefined,
+        });
+        setProviders(data);
+      } catch {
+        setDataError(true);
+      } finally {
+        setDataLoading(false);
+      }
+    },
+    []
+  );
+
+  const handleUrlChange = useCallback(
+    (q: string, service: string) => {
+      setNavUrlParams({ q, service });
+      setSearchOverride(null);
+      setServiceOverride(undefined);
+      const match = service
+        ? services.find((s) => s.name.toLowerCase() === service.toLowerCase())
+        : undefined;
+      loadProviders(match ? match.id : null, selectedLocation, selectedAvailability);
+    },
+    [services, selectedLocation, selectedAvailability, loadProviders]
+  );
+
+  // Parallel initial fetch: user + services + providers concurrently
   useEffect(() => {
     const token = getStoredToken();
     if (!token) {
@@ -140,66 +315,78 @@ function FindServiceContent() {
       return;
     }
 
-    getCurrentUser()
-      .then((user) => {
-        if (user.role !== 'customer') {
-          if (user.role === 'provider') router.replace('/provider');
-          else if (user.role === 'admin') router.replace('/admin');
-          return;
-        }
-        setCurrentUser(user);
-      })
-      .catch(() => {
+    let active = true;
+    const urlParams = new URLSearchParams(window.location.search);
+    const serviceParam = (urlParams.get('service') || '').trim().toLowerCase();
+    const cachedMatch = serviceParam
+      ? getCachedServicesSnapshot().find((s) => s.name.toLowerCase() === serviceParam)
+      : undefined;
+
+    Promise.allSettled([
+      getCurrentUser(),
+      getServices(),
+      getProviders(cachedMatch ? { service_id: cachedMatch.id } : undefined),
+    ]).then(([userRes, servicesRes, providersRes]) => {
+      if (!active) return;
+
+      if (userRes.status === 'rejected') {
         router.replace('/login');
-      })
-      .finally(() => {
-        setAuthLoading(false);
-      });
-  }, [router]);
-
-  // 2. Fetch services catalog once
-  useEffect(() => {
-    getServices()
-      .then((data) => {
-        setServices(data);
-      })
-      .catch(() => {
-        // Services will remain empty if network fails, covered by dataError
-      });
-  }, []);
-
-  // Match optional service name from URL after services load
-  useEffect(() => {
-    const serviceParam = searchParams?.get('service');
-    if (serviceParam && services.length > 0) {
-      const match = services.find((s) => s.name.toLowerCase() === serviceParam.toLowerCase());
-      if (match) {
-        setSelectedServiceId(match.id);
+        return;
       }
-    }
-  }, [searchParams, services]);
 
-  // 3. Fetch verified providers according to backend filters
-  const fetchProviders = useCallback(async () => {
-    setDataLoading(true);
-    setDataError(false);
-    try {
-      const data = await getProviders({
-        service_id: selectedServiceId ?? undefined,
-        location: selectedLocation !== 'all' ? selectedLocation : undefined,
-        availability_status: selectedAvailability !== 'all' ? selectedAvailability : undefined,
-      });
-      setProviders(data);
-    } catch {
-      setDataError(true);
-    } finally {
+      const user = userRes.value;
+      if (user.role !== 'customer') {
+        if (user.role === 'provider') router.replace('/provider');
+        else if (user.role === 'admin') router.replace('/admin');
+        return;
+      }
+      setFreshUser(user);
+
+      let resolvedServices: Service[] = getCachedServicesSnapshot();
+      if (servicesRes.status === 'fulfilled') {
+        resolvedServices = servicesRes.value;
+        setFreshServices(resolvedServices);
+        try {
+          localStorage.setItem(SERVICES_CACHE_KEY, JSON.stringify(resolvedServices));
+        } catch {
+          // Storage quota fallback
+        }
+      }
+
+      const matchedFromApi = serviceParam
+        ? resolvedServices.find((s) => s.name.toLowerCase() === serviceParam)
+        : undefined;
+
+      if (matchedFromApi && matchedFromApi.id !== cachedMatch?.id) {
+        getProviders({ service_id: matchedFromApi.id })
+          .then((filtered) => {
+            if (!active) return;
+            setProviders(filtered);
+            setDataError(false);
+          })
+          .catch(() => {
+            if (!active) return;
+            setDataError(true);
+          })
+          .finally(() => {
+            if (active) setDataLoading(false);
+          });
+        return;
+      }
+
+      if (providersRes.status === 'fulfilled') {
+        setProviders(providersRes.value);
+        setDataError(false);
+      } else {
+        setDataError(true);
+      }
       setDataLoading(false);
-    }
-  }, [selectedServiceId, selectedLocation, selectedAvailability]);
+    });
 
-  useEffect(() => {
-    fetchProviders();
-  }, [fetchProviders]);
+    return () => {
+      active = false;
+    };
+  }, [router]);
 
   // Client-side text search over returned verified providers with bilingual support
   const filteredProviders = useMemo(() => {
@@ -216,6 +403,22 @@ function FindServiceContent() {
     }
   };
 
+  // Filter change handlers
+  const handleSelectService = (serviceId: number | null) => {
+    setServiceOverride(serviceId);
+    loadProviders(serviceId, selectedLocation, selectedAvailability);
+  };
+
+  const handleSelectLocation = (location: string) => {
+    setSelectedLocation(location);
+    loadProviders(selectedServiceId, location, selectedAvailability);
+  };
+
+  const handleSelectAvailability = (availability: string) => {
+    setSelectedAvailability(availability);
+    loadProviders(selectedServiceId, selectedLocation, availability);
+  };
+
   // Combined locations list: default Dessie neighborhoods + any from returned providers
   const locationOptions = useMemo(() => {
     const unique = new Set(DESSIE_NEIGHBORHOODS);
@@ -229,10 +432,11 @@ function FindServiceContent() {
 
   // Reset all filters
   const handleResetFilters = () => {
-    setSelectedServiceId(null);
+    setServiceOverride(null);
     setSelectedLocation('all');
     setSelectedAvailability('all');
-    setSearchQuery('');
+    setSearchOverride('');
+    loadProviders(null, 'all', 'all');
   };
 
   // Sign out handler
@@ -253,26 +457,24 @@ function FindServiceContent() {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }, [currentUser]);
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-on-surface">
-        <span className="material-symbols-outlined text-[40px] animate-spin text-primary-container">
-          progress_activity
-        </span>
-      </div>
-    );
-  }
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const isAllServicesActive =
+    selectedServiceId === null &&
+    !(services.length === 0 && DEFAULT_FALLBACK_CATEGORIES.some((c) => c.query === normalizedSearch));
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-on-background font-body-md text-body-md antialiased transition-colors duration-200 selection:bg-primary-container selection:text-white">
+      <Suspense fallback={null}>
+        <SearchParamsSync onUrlChange={handleUrlChange} />
+      </Suspense>
       {/* ============================================================== */}
       {/* TOP APP BAR (Dessie Service Header)                             */}
       {/* ============================================================== */}
       <header className="bg-surface-container-lowest dark:bg-inverse-surface border-b border-outline-variant/30 dark:border-outline/20 shadow-sm dark:shadow-none top-0 sticky z-40 w-full px-3 sm:px-margin-mobile md:px-margin flex justify-between items-center h-14 sm:h-16 transition-colors duration-200">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <Link href="/customer" className="flex items-center gap-2 sm:gap-3 focus:outline-none min-w-0">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary-container flex items-center justify-center text-white font-bold shadow-sm shrink-0">
-              <span className="material-symbols-outlined text-[20px] sm:text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary-container dark:bg-emerald-700 flex items-center justify-center text-white font-bold shadow-sm shrink-0">
+              <span aria-hidden="true" className="material-symbols-outlined text-[20px] sm:text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>
                 handshake
               </span>
             </div>
@@ -281,8 +483,8 @@ function FindServiceContent() {
                 {t.brandTitle}
               </div>
               <div className="flex items-center gap-1 mt-0.5">
-                <span className="material-symbols-outlined text-outline text-[12px] sm:text-[14px]">location_on</span>
-                <span className="text-[11px] sm:text-label-sm font-label-sm text-outline dark:text-outline-variant truncate">
+                <span aria-hidden="true" className="material-symbols-outlined text-gray-700 dark:text-gray-300 text-[12px] sm:text-[14px]">location_on</span>
+                <span className="text-[11px] sm:text-label-sm font-label-sm text-gray-700 dark:text-gray-300 truncate">
                   {t.locationTag}
                 </span>
               </div>
@@ -300,8 +502,8 @@ function FindServiceContent() {
               onClick={() => setLang('en')}
               className={`px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs sm:text-label-md font-label-md transition-all duration-150 cursor-pointer ${
                 lang === 'en'
-                  ? 'font-semibold bg-primary-container text-white shadow-xs'
-                  : 'font-medium text-on-surface-variant dark:text-outline-variant hover:text-on-surface dark:hover:text-inverse-on-surface'
+                  ? 'font-semibold bg-primary-container dark:bg-emerald-700 text-white shadow-xs'
+                  : 'font-medium text-gray-700 dark:text-gray-300 hover:text-on-surface dark:hover:text-inverse-on-surface'
               }`}
             >
               EN
@@ -312,8 +514,8 @@ function FindServiceContent() {
               onClick={() => setLang('am')}
               className={`px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs sm:text-label-md font-label-md transition-all duration-150 cursor-pointer ${
                 lang === 'am'
-                  ? 'font-semibold bg-primary-container text-white shadow-xs'
-                  : 'font-medium text-on-surface-variant dark:text-outline-variant hover:text-on-surface dark:hover:text-inverse-on-surface'
+                  ? 'font-semibold bg-primary-container dark:bg-emerald-700 text-white shadow-xs'
+                  : 'font-medium text-gray-700 dark:text-gray-300 hover:text-on-surface dark:hover:text-inverse-on-surface'
               }`}
             >
               አማ
@@ -326,20 +528,20 @@ function FindServiceContent() {
             type="button"
             aria-label="Toggle theme"
             onClick={toggleTheme}
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg border border-outline-variant/60 dark:border-outline/40 flex items-center justify-center text-on-surface-variant dark:text-outline-variant hover:bg-surface-container dark:hover:bg-surface-dim hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150 focus:outline-none cursor-pointer"
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg border border-outline-variant/60 dark:border-outline/40 flex items-center justify-center text-gray-700 dark:text-gray-300 hover:bg-surface-container dark:hover:bg-surface-dim hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150 focus:outline-none cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[18px] sm:text-[20px]">
+            <span aria-hidden="true" className="material-symbols-outlined text-[18px] sm:text-[20px]">
               {theme === 'dark' ? 'light_mode' : 'dark_mode'}
             </span>
           </button>
 
           {/* User quick indicator in header (Desktop) */}
           <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-outline-variant/40">
-            <div className="w-8 h-8 rounded-full bg-primary-container/15 text-primary-container dark:text-inverse-primary font-bold text-xs flex items-center justify-center border border-primary-container/20">
+            <div className="w-8 h-8 rounded-full bg-primary-container/15 text-emerald-800 dark:text-inverse-primary font-bold text-xs flex items-center justify-center border border-primary-container/20">
               {userInitials}
             </div>
             <span className="font-label-md text-label-md text-on-surface dark:text-inverse-on-surface">
-              {currentUser?.name}
+              {currentUser?.name || t.navProfile}
             </span>
           </div>
         </div>
@@ -350,19 +552,19 @@ function FindServiceContent() {
       {/* ============================================================== */}
       <div className="flex flex-1">
         {/* DESKTOP SIDEBAR */}
-        <aside className="hidden md:flex flex-col p-4 w-64 h-[calc(100vh-4rem)] sticky top-16 bg-surface-container-lowest dark:bg-inverse-surface border-r border-outline-variant/30 dark:border-outline/20 justify-between shrink-0 transition-colors duration-200">
+        <aside aria-label="Customer sidebar" className="hidden md:flex flex-col p-4 w-64 h-[calc(100vh-4rem)] sticky top-16 bg-surface-container-lowest dark:bg-inverse-surface border-r border-outline-variant/30 dark:border-outline/20 justify-between shrink-0 transition-colors duration-200">
           <div className="space-y-6">
             {/* Customer Profile Card */}
             <div className="p-3.5 rounded-xl bg-surface-container-low dark:bg-surface-dim/40 border border-outline-variant/30 flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full bg-primary-container text-white font-bold flex items-center justify-center text-base shadow-sm shrink-0">
+              <div className="w-11 h-11 rounded-full bg-primary-container dark:bg-emerald-700 text-white font-bold flex items-center justify-center text-base shadow-sm shrink-0">
                 {userInitials}
               </div>
               <div className="overflow-hidden">
-                <h4 className="font-headline-sm text-headline-sm font-bold text-on-surface dark:text-inverse-on-surface truncate">
-                  {currentUser?.name}
-                </h4>
-                <p className="font-label-sm text-label-sm text-outline dark:text-outline-variant truncate flex items-center gap-0.5">
-                  <span className="material-symbols-outlined text-[13px]">location_on</span>
+                <p className="font-headline-sm text-headline-sm font-bold text-on-surface dark:text-inverse-on-surface truncate">
+                  {currentUser?.name || t.dashboardCustomer}
+                </p>
+                <p className="font-label-sm text-label-sm text-gray-700 dark:text-gray-300 truncate flex items-center gap-0.5">
+                  <span aria-hidden="true" className="material-symbols-outlined text-[13px]">location_on</span>
                   <span>Dessie, Wollo</span>
                 </p>
               </div>
@@ -374,9 +576,10 @@ function FindServiceContent() {
               <Link
                 id="navLinkDashboard"
                 href="/customer"
-                className="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-outline-variant font-medium hover:bg-surface-container dark:hover:bg-surface-dim hover:text-on-surface dark:hover:text-inverse-on-surface transition-colors duration-150"
+                aria-label={t.navDashboard}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 font-medium hover:bg-surface-container dark:hover:bg-surface-dim hover:text-on-surface dark:hover:text-inverse-on-surface transition-colors duration-150"
               >
-                <span className="material-symbols-outlined text-[22px]">dashboard</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[22px]">dashboard</span>
                 <span className="font-label-lg text-label-lg">{t.navDashboard}</span>
               </Link>
 
@@ -384,25 +587,38 @@ function FindServiceContent() {
               <Link
                 id="navLinkFindService"
                 href="/customer/services"
-                className="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary-container/15 dark:bg-primary-container/25 text-primary-container dark:text-inverse-primary font-semibold transition-colors duration-150"
+                aria-label={t.navFindService}
+                aria-current="page"
+                className="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary-container/15 dark:bg-primary-container/25 text-emerald-800 dark:text-inverse-primary font-semibold transition-colors duration-150"
               >
-                <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                <span aria-hidden="true" className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'FILL' 1" }}>
                   search
                 </span>
                 <span className="font-label-lg text-label-lg">{t.navFindService}</span>
               </Link>
 
               {/* 3. My Requests */}
-              <div className="flex items-center gap-3 px-4 py-3 rounded-lg text-outline dark:text-outline-variant/60 font-medium cursor-not-allowed opacity-60">
-                <span className="material-symbols-outlined text-[22px]">receipt_long</span>
+              <Link
+                id="navLinkMyRequests"
+                href="/customer/requests"
+                aria-label={t.navMyRequests}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 font-medium hover:bg-surface-container dark:hover:bg-surface-dim hover:text-on-surface dark:hover:text-inverse-on-surface transition-colors duration-150"
+              >
+                <span aria-hidden="true" className="material-symbols-outlined text-[22px]">receipt_long</span>
                 <span className="font-label-lg text-label-lg">{t.navMyRequests}</span>
-              </div>
+              </Link>
 
               {/* 4. Profile */}
-              <div className="flex items-center gap-3 px-4 py-3 rounded-lg text-outline dark:text-outline-variant/60 font-medium cursor-not-allowed opacity-60">
-                <span className="material-symbols-outlined text-[22px]">person</span>
+              <button
+                type="button"
+                disabled
+                aria-label={`${t.navProfile} (${lang === 'am' ? 'በቅርቡ' : 'Coming soon'})`}
+                title={t.navProfile}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-500 dark:text-gray-400 font-medium cursor-not-allowed"
+              >
+                <span aria-hidden="true" className="material-symbols-outlined text-[22px]">person</span>
                 <span className="font-label-lg text-label-lg">{t.navProfile}</span>
-              </div>
+              </button>
             </nav>
           </div>
 
@@ -413,9 +629,9 @@ function FindServiceContent() {
               type="button"
               onClick={() => setShowLogoutModal(true)}
               disabled={loggingOut}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-error hover:bg-error-container/40 dark:hover:bg-error/20 transition-colors duration-150 focus:outline-none cursor-pointer disabled:opacity-50"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-700 dark:text-red-300 hover:bg-error-container/40 dark:hover:bg-error/20 transition-colors duration-150 focus:outline-none cursor-pointer disabled:opacity-50"
             >
-              <span className="material-symbols-outlined text-[22px]">logout</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[22px]">logout</span>
               <span className="font-label-lg text-label-lg">
                 {loggingOut ? t.btnLogoutLoading : t.navSignOut}
               </span>
@@ -427,31 +643,34 @@ function FindServiceContent() {
         {/* MAIN CONTENT CANVAS                                             */}
         {/* ============================================================== */}
         <main className="flex-1 p-3 sm:p-4 md:p-8 max-w-7xl mx-auto w-full pb-28 md:pb-8">
-          {/* PAGE HEADER */}
-          <section className="mb-4 sm:mb-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 sm:gap-3">
-              <div>
+          {/* PAGE HEADER HERO */}
+          <section className="bg-gradient-to-br from-surface-container-low via-surface-container-lowest to-surface-container-low dark:from-inverse-surface dark:via-[#1c1916] dark:to-inverse-surface rounded-2xl border border-outline-variant/40 shadow-sm p-4 sm:p-6 md:p-7 mb-4 sm:mb-5">
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-3 sm:gap-4">
+              <div className="max-w-2xl">
                 <h1
                   id="pageTitle"
-                  className="font-headline-xl text-xl sm:text-2xl md:text-headline-xl text-on-surface dark:text-inverse-on-surface tracking-tight font-extrabold"
+                  className="font-headline-xl text-xl sm:text-2xl md:text-headline-xl md:text-[2.25rem] md:leading-[2.75rem] text-on-surface dark:text-inverse-on-surface tracking-tight font-extrabold"
                 >
                   {t.findServiceTitle}
                 </h1>
                 <p
                   id="pageSubtitle"
-                  className="font-body-sm text-xs sm:text-body-sm md:text-body-md text-on-surface-variant dark:text-outline-variant mt-0.5 sm:mt-1"
+                  className="font-body-sm text-sm sm:text-base text-gray-700 dark:text-gray-300 mt-1.5 sm:mt-2 leading-relaxed"
                 >
-                  {t.findServiceSubtitle}
+                  {t.findServiceSubtitle}{' '}
+                  {lang === 'am'
+                    ? 'በሆቴ፣ ፒያሳ፣ መናኸሪያ፣ አራዳ እና በደሴ ዙሪያ የተረጋገጡ የቧንቧ፣ የኤሌክትሪክ፣ የጽዳት እና የአናጺ ባለሙያዎችን በፍጥነት ያግኙ።'
+                    : 'Browse vetted plumbers, electricians, cleaners, carpenters, and skilled technicians across Hotie, Piazza, Menhariya, and Arada.'}
                 </p>
               </div>
 
               {/* Verified stats pill */}
               <div
                 id="verifiedNetworkPill"
-                className="inline-flex items-center gap-1.5 sm:gap-2 self-start md:self-auto px-2.5 py-1 sm:px-3.5 sm:py-1.5 bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/40 rounded-full shadow-xs text-outline"
+                className="inline-flex items-center gap-1.5 sm:gap-2 self-start px-2.5 py-1 sm:px-3.5 sm:py-1.5 bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/40 rounded-full shadow-xs shrink-0"
               >
-                <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-primary-container"></span>
-                <span className="font-label-sm sm:font-label-md text-xs sm:text-label-md text-on-surface-variant dark:text-outline-variant font-medium">
+                <span aria-hidden="true" className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-primary-container"></span>
+                <span className="font-label-sm sm:font-label-md text-xs sm:text-label-md text-gray-700 dark:text-gray-300 font-medium">
                   {t.verifiedNetworkPill}
                 </span>
               </div>
@@ -464,33 +683,34 @@ function FindServiceContent() {
               onSubmit={handleSearchSubmit}
               className="relative bg-surface-container-lowest dark:bg-inverse-surface rounded-xl shadow-xs border border-outline-variant/40 p-1 sm:p-1.5 flex items-center transition-all focus-within:ring-2 focus-within:ring-primary-container focus-within:border-primary-container gap-1 sm:gap-2"
             >
-              <div className="pl-2 sm:pl-3 flex items-center pointer-events-none text-outline shrink-0">
+              <div aria-hidden="true" className="pl-2 sm:pl-3 flex items-center pointer-events-none text-gray-600 dark:text-gray-300 shrink-0">
                 <span className="material-symbols-outlined text-[20px] sm:text-[24px]">search</span>
               </div>
               <input
                 id="searchInput"
                 type="text"
+                aria-label="Search services"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => setSearchOverride(e.target.value)}
                 placeholder={t.searchPlaceholder}
-                className="w-full min-w-0 bg-transparent border-none text-on-surface dark:text-inverse-on-surface font-body-sm sm:font-body-md text-xs sm:text-body-md placeholder:text-outline focus:outline-none px-1.5 sm:px-2 py-1.5 sm:py-2 outline-none"
+                className="w-full min-w-0 bg-transparent border-none text-on-surface dark:text-inverse-on-surface font-body-sm sm:font-body-md text-xs sm:text-body-md placeholder:text-gray-600 dark:placeholder:text-gray-400 focus:outline-none px-1.5 sm:px-2 py-1.5 sm:py-2 outline-none"
               />
               {searchQuery && (
                 <button
                   type="button"
-                  onClick={() => setSearchQuery('')}
+                  onClick={() => setSearchOverride('')}
                   aria-label="Clear search"
-                  className="p-1 sm:p-1.5 text-outline hover:text-on-surface dark:hover:text-inverse-on-surface cursor-pointer shrink-0"
+                  className="p-1 sm:p-1.5 text-gray-700 dark:text-gray-300 hover:text-on-surface dark:hover:text-inverse-on-surface cursor-pointer shrink-0"
                 >
-                  <span className="material-symbols-outlined text-[18px] sm:text-[20px]">close</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[18px] sm:text-[20px]">close</span>
                 </button>
               )}
               <button
                 id="searchSubmitBtn"
                 type="submit"
-                className="inline-flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 bg-primary-container hover:bg-primary text-white rounded-lg font-label-md text-xs sm:text-label-md font-bold transition-colors shadow-xs cursor-pointer shrink-0"
+                className="inline-flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 bg-primary-container dark:bg-emerald-700 hover:bg-primary dark:hover:bg-emerald-600 text-white rounded-lg font-label-md text-xs sm:text-label-md font-bold transition-colors shadow-xs cursor-pointer shrink-0"
               >
-                <span className="material-symbols-outlined text-[16px] sm:text-[18px]">search</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[16px] sm:text-[18px]">search</span>
                 <span>{t.searchBtn}</span>
               </button>
             </form>
@@ -500,40 +720,57 @@ function FindServiceContent() {
           <section className="mb-4 sm:mb-6">
             <div
               id="servicePillsContainer"
+              role="group"
+              aria-label="Service category filters"
               className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-2 scrollbar-none"
             >
               {/* "All Services" Pill */}
               <button
                 id="pillAllServices"
                 type="button"
-                onClick={() => setSelectedServiceId(null)}
-                className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-label-sm sm:font-label-md text-xs sm:text-label-md whitespace-nowrap transition-colors cursor-pointer shadow-xs ${
-                  selectedServiceId === null
-                    ? 'bg-primary-container text-white font-semibold'
-                    : 'bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/60 dark:border-outline/40 text-on-surface-variant dark:text-outline-variant hover:border-primary-container hover:text-primary-container dark:hover:text-inverse-primary'
-                }`}
+                aria-pressed={isAllServicesActive}
+                onClick={() => {
+                  if (services.length === 0) {
+                    setSearchOverride('');
+                  }
+                  handleSelectService(null);
+                }}
+                className={getCategoryPillClassName(isAllServicesActive)}
               >
                 {t.pillAllServices}
               </button>
 
-              {/* Dynamic Service Pills */}
-              {services.map((svc) => (
-                <button
-                  key={svc.id}
-                  id={`pillService-${svc.id}`}
-                  type="button"
-                  onClick={() =>
-                    setSelectedServiceId(selectedServiceId === svc.id ? null : svc.id)
-                  }
-                  className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-label-sm sm:font-label-md text-xs sm:text-label-md whitespace-nowrap transition-colors cursor-pointer shadow-xs ${
-                    selectedServiceId === svc.id
-                      ? 'bg-primary-container text-white font-semibold'
-                      : 'bg-surface-container-lowest dark:bg-inverse-surface border border-outline-variant/60 dark:border-outline/40 text-on-surface-variant dark:text-outline-variant hover:border-primary-container hover:text-primary-container dark:hover:text-inverse-primary'
-                  }`}
-                >
-                  {svc.name}
-                </button>
-              ))}
+              {/* Live Backend Service Pills or Immediate Fallback Default Pills */}
+              {services.length > 0
+                ? services.map((svc) => (
+                    <button
+                      key={svc.id}
+                      id={`pillService-${svc.id}`}
+                      type="button"
+                      aria-pressed={selectedServiceId === svc.id}
+                      onClick={() =>
+                        handleSelectService(selectedServiceId === svc.id ? null : svc.id)
+                      }
+                      className={getCategoryPillClassName(selectedServiceId === svc.id)}
+                    >
+                      {svc.name}
+                    </button>
+                  ))
+                : DEFAULT_FALLBACK_CATEGORIES.map((cat) => {
+                    const isActive = normalizedSearch === cat.query;
+                    return (
+                      <button
+                        key={cat.id}
+                        id={`pillService-${cat.id}`}
+                        type="button"
+                        aria-pressed={isActive}
+                        onClick={() => setSearchOverride(isActive ? '' : cat.query)}
+                        className={getCategoryPillClassName(isActive)}
+                      >
+                        {cat.name}
+                      </button>
+                    );
+                  })}
             </div>
           </section>
 
@@ -544,14 +781,15 @@ function FindServiceContent() {
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <label
                   htmlFor="locationFilter"
-                  className="w-24 sm:w-auto font-label-md text-xs sm:text-body-sm text-on-surface-variant dark:text-outline-variant shrink-0 font-medium"
+                  className="w-24 sm:w-auto font-label-md text-xs sm:text-body-sm text-gray-700 dark:text-gray-300 shrink-0 font-medium"
                 >
                   {t.filterLocationLabel}
                 </label>
                 <select
                   id="locationFilter"
+                  aria-label="Filter by location"
                   value={selectedLocation}
-                  onChange={(e) => setSelectedLocation(e.target.value)}
+                  onChange={(e) => handleSelectLocation(e.target.value)}
                   className="flex-1 sm:flex-none h-9 sm:h-10 px-3 py-1.5 rounded-lg border border-outline-variant/60 dark:border-outline/40 bg-surface dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-xs sm:text-body-sm focus:ring-2 focus:ring-primary-container focus:border-primary-container outline-none cursor-pointer"
                 >
                   <option value="all">{t.optAllLocations}</option>
@@ -567,14 +805,15 @@ function FindServiceContent() {
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <label
                   htmlFor="availabilityFilter"
-                  className="w-24 sm:w-auto font-label-md text-xs sm:text-body-sm text-on-surface-variant dark:text-outline-variant shrink-0 font-medium"
+                  className="w-24 sm:w-auto font-label-md text-xs sm:text-body-sm text-gray-700 dark:text-gray-300 shrink-0 font-medium"
                 >
                   {t.filterAvailabilityLabel}
                 </label>
                 <select
                   id="availabilityFilter"
+                  aria-label="Filter by availability"
                   value={selectedAvailability}
-                  onChange={(e) => setSelectedAvailability(e.target.value)}
+                  onChange={(e) => handleSelectAvailability(e.target.value)}
                   className="flex-1 sm:flex-none h-9 sm:h-10 px-3 py-1.5 rounded-lg border border-outline-variant/60 dark:border-outline/40 bg-surface dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface text-xs sm:text-body-sm focus:ring-2 focus:ring-primary-container focus:border-primary-container outline-none cursor-pointer"
                 >
                   <option value="all">{t.optAllAvailability}</option>
@@ -592,8 +831,8 @@ function FindServiceContent() {
                 className="font-label-sm sm:font-label-lg text-xs sm:text-label-lg text-on-surface dark:text-inverse-on-surface"
               >
                 <span>{t.showingPrefix}</span>{' '}
-                <strong id="dynamicCount" className="text-primary-container dark:text-inverse-primary font-bold">
-                  {filteredProviders.length}
+                <strong id="dynamicCount" className="text-emerald-800 dark:text-inverse-primary font-bold">
+                  {dataLoading ? '—' : filteredProviders.length}
                 </strong>{' '}
                 <span>{t.showingSuffix}</span>
               </p>
@@ -606,30 +845,41 @@ function FindServiceContent() {
           <div id="resultsCanvas">
             {/* 1. LOADING SKELETON STATE */}
             {dataLoading && (
-              <div id="loadingView" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div
+                id="loadingView"
+                aria-busy="true"
+                aria-label="Loading verified providers"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              >
                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div
+                  <article
                     key={i}
-                    className="bg-surface-container-lowest dark:bg-inverse-surface rounded-xl border border-outline-variant/30 p-5 animate-pulse flex flex-col justify-between h-56"
+                    className="bg-surface-container-lowest dark:bg-inverse-surface rounded-xl border border-outline-variant/30 p-3.5 sm:p-5 flex flex-col justify-between min-h-[216px]"
                   >
                     <div>
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-surface-container-high dark:bg-surface-dim shrink-0" />
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface-container-high dark:bg-surface-dim animate-pulse shrink-0" />
                         <div className="space-y-2 flex-1">
-                          <div className="h-4 bg-surface-container-high dark:bg-surface-dim rounded w-3/4" />
-                          <div className="h-3 bg-surface-container-high dark:bg-surface-dim rounded w-1/2" />
+                          {i === 1 ? (
+                            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                              {lang === 'am' ? 'በደሴ የተረጋገጡ ባለሙያዎችን በመፈለግ ላይ...' : 'Loading verified providers in Dessie...'}
+                            </p>
+                          ) : (
+                            <div className="h-4 bg-surface-container-high dark:bg-surface-dim rounded w-3/4 animate-pulse" />
+                          )}
+                          <div className="h-3 bg-surface-container-high dark:bg-surface-dim rounded w-1/2 animate-pulse" />
                         </div>
                       </div>
-                      <div className="flex gap-2 my-4">
+                      <div className="flex gap-2 my-4 animate-pulse">
                         <div className="h-6 w-16 bg-surface-container-high dark:bg-surface-dim rounded-md" />
                         <div className="h-6 w-24 bg-surface-container-high dark:bg-surface-dim rounded-md" />
                       </div>
                     </div>
-                    <div className="pt-4 border-t border-outline-variant/30 flex justify-between items-center">
+                    <div className="pt-4 border-t border-outline-variant/30 flex justify-between items-center animate-pulse">
                       <div className="h-4 w-16 bg-surface-container-high dark:bg-surface-dim rounded" />
                       <div className="h-8 w-24 bg-surface-container-high dark:bg-surface-dim rounded-lg" />
                     </div>
-                  </div>
+                  </article>
                 ))}
               </div>
             )}
@@ -640,22 +890,22 @@ function FindServiceContent() {
                 id="errorView"
                 className="flex flex-col items-center justify-center p-12 text-center bg-surface-container-lowest dark:bg-inverse-surface rounded-2xl border border-error/30 my-6 shadow-xs"
               >
-                <div className="w-16 h-16 rounded-full bg-error-container/40 flex items-center justify-center text-error mb-4">
-                  <span className="material-symbols-outlined text-[36px]">error</span>
+                <div className="w-16 h-16 rounded-full bg-error-container/40 flex items-center justify-center text-red-700 dark:text-red-300 mb-4">
+                  <span aria-hidden="true" className="material-symbols-outlined text-[36px]">error</span>
                 </div>
-                <h3 className="font-headline-md text-headline-md font-bold text-on-surface dark:text-inverse-on-surface">
+                <h2 className="font-headline-md text-headline-md font-bold text-on-surface dark:text-inverse-on-surface">
                   {t.errorTitle}
-                </h3>
-                <p className="font-body-md text-body-md text-on-surface-variant dark:text-outline-variant mt-2 max-w-sm">
+                </h2>
+                <p className="font-body-md text-body-md text-gray-700 dark:text-gray-300 mt-2 max-w-sm">
                   {t.errorSubtitle}
                 </p>
                 <button
                   id="errorRetryBtn"
                   type="button"
-                  onClick={fetchProviders}
-                  className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary-container text-white font-label-md text-label-md hover:bg-primary transition-colors cursor-pointer shadow-xs"
+                  onClick={() => loadProviders(selectedServiceId, selectedLocation, selectedAvailability)}
+                  className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary-container dark:bg-emerald-700 text-white font-label-md text-label-md hover:bg-primary dark:hover:bg-emerald-600 transition-colors cursor-pointer shadow-xs"
                 >
-                  <span className="material-symbols-outlined text-[18px]">refresh</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[18px]">refresh</span>
                   <span>{t.errorRetryBtn}</span>
                 </button>
               </div>
@@ -667,11 +917,11 @@ function FindServiceContent() {
                 id="emptyView"
                 className="flex flex-col items-center justify-center p-8 sm:p-12 text-center bg-surface-container-lowest dark:bg-inverse-surface rounded-2xl border border-outline-variant/30 my-6 shadow-xs space-y-4"
               >
-                <div className="w-16 h-16 rounded-full bg-surface-container dark:bg-surface-dim flex items-center justify-center text-outline">
-                  <span className="material-symbols-outlined text-[36px]">search_off</span>
+                <div className="w-16 h-16 rounded-full bg-surface-container dark:bg-surface-dim flex items-center justify-center text-gray-700 dark:text-gray-300">
+                  <span aria-hidden="true" className="material-symbols-outlined text-[36px]">search_off</span>
                 </div>
                 <div className="space-y-1">
-                  <h3
+                  <h2
                     id="emptyStateTitle"
                     className="font-headline-md text-xl font-bold text-on-surface dark:text-inverse-on-surface"
                   >
@@ -680,10 +930,10 @@ function FindServiceContent() {
                         ? `ለ "${searchQuery}" ${t.searchNoResultsFound}`
                         : `${t.searchNoResultsFound} for "${searchQuery}"`
                       : t.emptyStateTitle}
-                  </h3>
+                  </h2>
                   <p
                     id="emptyStateSubtitle"
-                    className="font-body-md text-body-md text-on-surface-variant dark:text-outline-variant max-w-md mx-auto"
+                    className="font-body-md text-body-md text-gray-700 dark:text-gray-300 max-w-md mx-auto"
                   >
                     {searchQuery.trim()
                       ? t.searchNoResultsDesc
@@ -696,10 +946,10 @@ function FindServiceContent() {
                   {searchQuery && (
                     <button
                       type="button"
-                      onClick={() => setSearchQuery('')}
+                      onClick={() => setSearchOverride('')}
                       className="px-4 py-2 rounded-xl bg-surface-container dark:bg-surface-dim hover:bg-surface-container-high text-on-surface dark:text-inverse-on-surface font-semibold text-xs border border-outline-variant/40 transition-colors flex items-center gap-1 cursor-pointer"
                     >
-                      <span className="material-symbols-outlined text-[16px]">close</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
                       <span>{t.searchClearBtn}</span>
                     </button>
                   )}
@@ -707,9 +957,9 @@ function FindServiceContent() {
                     id="emptyResetBtn"
                     type="button"
                     onClick={handleResetFilters}
-                    className="px-5 py-2 rounded-xl bg-primary-container text-white font-label-md text-label-md font-bold hover:bg-primary transition-colors cursor-pointer shadow-xs flex items-center gap-1"
+                    className="px-5 py-2 rounded-xl bg-primary-container dark:bg-emerald-700 text-white font-label-md text-label-md font-bold hover:bg-primary dark:hover:bg-emerald-600 transition-colors cursor-pointer shadow-xs flex items-center gap-1"
                   >
-                    <span className="material-symbols-outlined text-[16px]">refresh</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[16px]">refresh</span>
                     <span>{t.emptyResetBtn}</span>
                   </button>
                 </div>
@@ -717,7 +967,7 @@ function FindServiceContent() {
                 {/* Quick Service Suggestions */}
                 {services.length > 0 && (
                   <div className="pt-4 border-t border-outline-variant/20 w-full max-w-md">
-                    <p className="text-xs text-outline dark:text-outline-variant mb-2 font-medium">
+                    <p className="text-xs text-gray-700 dark:text-gray-300 mb-2 font-medium">
                       {lang === 'am' ? 'ታዋቂ የአገልግሎት ምድቦችን ይሞክሩ፡' : 'Try searching popular services:'}
                     </p>
                     <div className="flex flex-wrap items-center justify-center gap-2">
@@ -726,10 +976,10 @@ function FindServiceContent() {
                           key={svc.id}
                           type="button"
                           onClick={() => {
-                            setSearchQuery('');
-                            setSelectedServiceId(svc.id);
+                            setSearchOverride('');
+                            handleSelectService(svc.id);
                           }}
-                          className="px-3 py-1 rounded-full text-xs font-semibold bg-surface-container-high dark:bg-surface-dim hover:bg-primary-container hover:text-white transition-colors text-on-surface dark:text-inverse-on-surface border border-outline-variant/30 cursor-pointer"
+                          className="px-3 py-1 rounded-full text-xs font-semibold bg-surface-container-high dark:bg-surface-dim hover:bg-primary-container dark:hover:bg-emerald-700 hover:text-white transition-colors text-on-surface dark:text-inverse-on-surface border border-outline-variant/30 cursor-pointer"
                         >
                           {svc.name}
                         </button>
@@ -742,128 +992,134 @@ function FindServiceContent() {
 
             {/* 4. NORMAL RESULTS GRID */}
             {!dataLoading && !dataError && filteredProviders.length > 0 && (
-              <div
-                id="normalViewGrid"
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              >
-                {filteredProviders.map((provider) => {
-                  const primaryService = provider.services?.[0]?.name;
-                  const serviceIcon = getServiceIcon(primaryService);
+              <>
+                <h2 className="sr-only">{t.verifiedNetworkPill}</h2>
+                <div
+                  id="normalViewGrid"
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                >
+                  {filteredProviders.map((provider) => {
+                    const primaryService = provider.services?.[0]?.name;
+                    const serviceIcon = getServiceIcon(primaryService);
 
-                  return (
-                    <article
-                      key={provider.id}
-                      className="provider-card bg-surface-container-lowest dark:bg-inverse-surface rounded-xl border border-outline-variant/30 dark:border-outline/20 p-3.5 sm:p-5 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between overflow-hidden"
-                    >
-                      <div className="w-full min-w-0">
-                        {/* Header: Service Icon + Business Name + Verified Badge */}
-                        <div className="flex items-start justify-between gap-2.5 sm:gap-3 mb-2.5 sm:mb-3">
-                          <div className="flex items-start gap-2.5 sm:gap-3 min-w-0 flex-1">
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary-container/15 text-primary-container dark:text-inverse-primary flex items-center justify-center font-bold text-base sm:text-lg border border-primary-container/20 shrink-0 mt-0.5">
-                              <span className="material-symbols-outlined text-[22px] sm:text-[26px]">
-                                {serviceIcon}
-                              </span>
+                    return (
+                      <article
+                        key={provider.id}
+                        className="provider-card bg-surface-container-lowest dark:bg-inverse-surface rounded-xl border border-outline-variant/30 dark:border-outline/20 p-3.5 sm:p-5 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between overflow-hidden"
+                      >
+                        <div className="w-full min-w-0">
+                          {/* Header: Service Icon + Business Name + Verified Badge */}
+                          <div className="flex items-start justify-between gap-2.5 sm:gap-3 mb-2.5 sm:mb-3">
+                            <div className="flex items-start gap-2.5 sm:gap-3 min-w-0 flex-1">
+                              <div aria-hidden="true" className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary-container/15 text-emerald-800 dark:text-inverse-primary flex items-center justify-center font-bold text-base sm:text-lg border border-primary-container/20 shrink-0 mt-0.5">
+                                <span className="material-symbols-outlined text-[22px] sm:text-[26px]">
+                                  {serviceIcon}
+                                </span>
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <h3
+                                  className="font-headline-sm text-sm sm:text-base md:text-lg font-bold text-on-surface dark:text-inverse-on-surface leading-snug break-words line-clamp-2"
+                                  title={provider.business_name}
+                                >
+                                  {provider.business_name}
+                                </h3>
+                                {provider.experience_years > 0 && (
+                                  <p className="font-body-sm text-xs sm:text-body-sm text-gray-700 dark:text-gray-300 flex items-center gap-1 mt-0.5">
+                                    <span aria-hidden="true" className="material-symbols-outlined text-[13px] sm:text-[14px]">timeline</span>
+                                    <span>
+                                      {provider.experience_years} {t.experienceYearsSuffix}
+                                    </span>
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <h3
-                                className="font-headline-sm text-sm sm:text-base md:text-lg font-bold text-on-surface dark:text-inverse-on-surface leading-snug break-words line-clamp-2"
-                                title={provider.business_name}
+
+                            {/* Verified Badge */}
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-2xs sm:text-xs font-semibold bg-primary-container/10 text-emerald-800 dark:text-inverse-primary border border-primary-container/20 shrink-0 self-start">
+                              <span
+                                aria-hidden="true"
+                                className="material-symbols-outlined text-[12px] sm:text-[14px]"
+                                style={{ fontVariationSettings: "'FILL' 1" }}
                               >
-                                {provider.business_name}
-                              </h3>
-                              {provider.experience_years > 0 && (
-                                <p className="font-body-sm text-xs sm:text-body-sm text-on-surface-variant dark:text-outline-variant flex items-center gap-1 mt-0.5">
-                                  <span className="material-symbols-outlined text-[13px] sm:text-[14px]">timeline</span>
-                                  <span>
-                                    {provider.experience_years} {t.experienceYearsSuffix}
-                                  </span>
-                                </p>
-                              )}
-                            </div>
+                                verified
+                              </span>
+                              <span>{t.badgeVerified}</span>
+                            </span>
                           </div>
 
-                          {/* Verified Badge */}
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-2xs sm:text-xs font-semibold bg-primary-container/10 text-primary-container dark:text-inverse-primary border border-primary-container/20 shrink-0 self-start">
-                            <span
-                              className="material-symbols-outlined text-[12px] sm:text-[14px]"
-                              style={{ fontVariationSettings: "'FILL' 1" }}
-                            >
-                              verified
-                            </span>
-                            <span>{t.badgeVerified}</span>
-                          </span>
-                        </div>
-
-                        {/* Description snippet if available */}
-                        {provider.description && (
-                          <p className="text-xs sm:text-body-sm font-body-sm text-on-surface-variant dark:text-outline-variant line-clamp-2 mt-1.5 sm:mt-2 break-words">
-                            {provider.description}
-                          </p>
-                        )}
-
-                        {/* Service & Neighborhood Tags */}
-                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2.5 sm:mt-3">
-                          {provider.services?.map((svc) => (
-                            <span
-                              key={svc.id}
-                              className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-2xs sm:text-xs font-semibold bg-surface-container dark:bg-surface-dim text-on-surface dark:text-inverse-on-surface border border-outline-variant/20 max-w-full truncate"
-                              title={svc.name}
-                            >
-                              {svc.name}
-                            </span>
-                          ))}
-                          <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-2xs sm:text-xs text-outline dark:text-outline-variant flex items-center gap-1 bg-surface-container-low dark:bg-surface-dim/40 border border-outline-variant/20 max-w-full">
-                            <span className="material-symbols-outlined text-[12px] sm:text-[13px] shrink-0">location_on</span>
-                            <span className="truncate">{provider.location}, Dessie</span>
-                          </span>
-                          {provider.phone && (
-                            <a
-                              href={`tel:${provider.phone}`}
-                              className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-2xs sm:text-xs text-primary-container dark:text-inverse-primary font-mono flex items-center gap-1 bg-primary-container/10 border border-primary-container/20 hover:underline shrink-0"
-                              title={t.callProviderBtn}
-                            >
-                              <span className="material-symbols-outlined text-[12px] sm:text-[13px] shrink-0">call</span>
-                              <span>{provider.phone}</span>
-                            </a>
+                          {/* Description snippet if available */}
+                          {provider.description && (
+                            <p className="text-xs sm:text-body-sm font-body-sm text-gray-700 dark:text-gray-300 line-clamp-2 mt-1.5 sm:mt-2 break-words">
+                              {provider.description}
+                            </p>
                           )}
+
+                          {/* Service & Neighborhood Tags */}
+                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2.5 sm:mt-3">
+                            {provider.services?.map((svc) => (
+                              <span
+                                key={svc.id}
+                                className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-2xs sm:text-xs font-semibold bg-surface-container dark:bg-surface-dim text-on-surface dark:text-inverse-on-surface border border-outline-variant/20 max-w-full truncate"
+                                title={svc.name}
+                              >
+                                {svc.name}
+                              </span>
+                            ))}
+                            <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-2xs sm:text-xs text-gray-700 dark:text-gray-300 flex items-center gap-1 bg-surface-container-low dark:bg-surface-dim/40 border border-outline-variant/20 max-w-full">
+                              <span aria-hidden="true" className="material-symbols-outlined text-[12px] sm:text-[13px] shrink-0">location_on</span>
+                              <span className="truncate">{provider.location}, Dessie</span>
+                            </span>
+                            {provider.phone && (
+                              <a
+                                href={`tel:${provider.phone}`}
+                                aria-label={`${t.callProviderBtn}: ${provider.phone}`}
+                                className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-2xs sm:text-xs text-emerald-800 dark:text-inverse-primary font-mono flex items-center gap-1 bg-primary-container/10 border border-primary-container/20 hover:underline shrink-0"
+                                title={t.callProviderBtn}
+                              >
+                                <span aria-hidden="true" className="material-symbols-outlined text-[12px] sm:text-[13px] shrink-0">call</span>
+                                <span>{provider.phone}</span>
+                              </a>
+                            )}
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Footer of Card: Availability & Profile Action */}
-                      <div className="mt-3.5 pt-3 sm:mt-5 sm:pt-4 border-t border-outline-variant/30 dark:border-outline/20 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2">
-                        {/* Availability Status */}
-                        {provider.availability_status === 'available' && (
-                          <span className="inline-flex items-center gap-1.5 text-2xs sm:text-xs font-semibold text-primary-container dark:text-inverse-primary shrink-0">
-                            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary-container animate-pulse shrink-0"></span>
-                            <span>{t.statusAvailable}</span>
-                          </span>
-                        )}
-                        {provider.availability_status === 'busy' && (
-                          <span className="inline-flex items-center gap-1.5 text-2xs sm:text-xs font-semibold text-secondary shrink-0">
-                            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-secondary shrink-0"></span>
-                            <span>{t.statusBusy}</span>
-                          </span>
-                        )}
-                        {provider.availability_status === 'offline' && (
-                          <span className="inline-flex items-center gap-1.5 text-2xs sm:text-xs font-semibold text-outline shrink-0">
-                            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-outline shrink-0"></span>
-                            <span>{t.statusOffline}</span>
-                          </span>
-                        )}
+                        {/* Footer of Card: Availability & Profile Action */}
+                        <div className="mt-3.5 pt-3 sm:mt-5 sm:pt-4 border-t border-outline-variant/30 dark:border-outline/20 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2">
+                          {/* Availability Status */}
+                          {provider.availability_status === 'available' && (
+                            <span className="inline-flex items-center gap-1.5 text-2xs sm:text-xs font-semibold text-emerald-800 dark:text-inverse-primary shrink-0">
+                              <span aria-hidden="true" className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary-container animate-pulse shrink-0"></span>
+                              <span>{t.statusAvailable}</span>
+                            </span>
+                          )}
+                          {provider.availability_status === 'busy' && (
+                            <span className="inline-flex items-center gap-1.5 text-2xs sm:text-xs font-semibold text-amber-800 dark:text-amber-300 shrink-0">
+                              <span aria-hidden="true" className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-secondary shrink-0"></span>
+                              <span>{t.statusBusy}</span>
+                            </span>
+                          )}
+                          {provider.availability_status === 'offline' && (
+                            <span className="inline-flex items-center gap-1.5 text-2xs sm:text-xs font-semibold text-gray-700 dark:text-gray-300 shrink-0">
+                              <span aria-hidden="true" className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-outline shrink-0"></span>
+                              <span>{t.statusOffline}</span>
+                            </span>
+                          )}
 
-                        {/* View Profile Action Link (navigation only, per specification) */}
-                        <Link
-                          href={`/customer/providers/${provider.id}`}
-                          className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-lg bg-surface-container-high dark:bg-surface-dim hover:bg-primary-container hover:text-white dark:hover:bg-primary-container text-on-surface dark:text-inverse-on-surface font-label-md text-xs sm:text-label-md transition-colors flex items-center gap-1 shadow-2xs shrink-0 ml-auto sm:ml-0"
-                        >
-                          <span>{t.btnViewProfile}</span>
-                          <span className="material-symbols-outlined text-[14px] sm:text-[16px] shrink-0">arrow_forward</span>
-                        </Link>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
+                          {/* View Profile Action Link (navigation only, per specification) */}
+                          <Link
+                            href={`/customer/providers/${provider.id}`}
+                            aria-label={`${t.btnViewProfile}: ${provider.business_name}`}
+                            className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-lg bg-surface-container-high dark:bg-surface-dim hover:bg-primary-container dark:hover:bg-emerald-700 hover:text-white text-on-surface dark:text-inverse-on-surface font-label-md text-xs sm:text-label-md transition-colors flex items-center gap-1 shadow-2xs shrink-0 ml-auto sm:ml-0"
+                          >
+                            <span>{t.btnViewProfile}</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-[14px] sm:text-[16px] shrink-0">arrow_forward</span>
+                          </Link>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </div>
         </main>
@@ -879,41 +1135,54 @@ function FindServiceContent() {
         {/* Tab 1: Dashboard */}
         <Link
           href="/customer"
-          className="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant py-1 active:scale-95 transition-transform"
+          aria-label={t.navDashboard}
+          className="flex flex-col items-center justify-center text-gray-700 dark:text-gray-300 py-1 active:scale-95 transition-transform"
         >
-          <span className="material-symbols-outlined text-[20px]">dashboard</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[20px]">dashboard</span>
           <span className="font-label-sm text-label-sm mt-0.5">{t.navDashboard}</span>
         </Link>
 
         {/* Tab 2: Find Service (ACTIVE) */}
         <Link
           href="/customer/services"
-          className="flex flex-col items-center justify-center text-primary-container dark:text-inverse-primary font-bold py-1 active:scale-95 transition-transform"
+          aria-label={t.navFindService}
+          aria-current="page"
+          className="flex flex-col items-center justify-center text-emerald-800 dark:text-inverse-primary font-bold py-1 active:scale-95 transition-transform"
         >
-          <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+          <span aria-hidden="true" className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>
             search
           </span>
           <span className="font-label-sm text-label-sm mt-0.5">{t.navFindService}</span>
         </Link>
 
         {/* Tab 3: Requests */}
-        <div className="flex flex-col items-center justify-center text-outline dark:text-outline-variant/50 py-1 opacity-60 cursor-not-allowed">
-          <span className="material-symbols-outlined text-[20px]">receipt_long</span>
+        <Link
+          href="/customer/requests"
+          aria-label={t.navMyRequests}
+          className="flex flex-col items-center justify-center text-gray-700 dark:text-gray-300 py-1 active:scale-95 transition-transform"
+        >
+          <span aria-hidden="true" className="material-symbols-outlined text-[20px]">receipt_long</span>
           <span className="font-label-sm text-label-sm mt-0.5">{t.navMyRequests}</span>
-        </div>
+        </Link>
 
         {/* Tab 4: Profile */}
-        <div className="flex flex-col items-center justify-center text-outline dark:text-outline-variant/50 py-1 opacity-60 cursor-not-allowed">
-          <span className="material-symbols-outlined text-[20px]">person</span>
+        <button
+          type="button"
+          disabled
+          aria-label={`${t.navProfile} (${lang === 'am' ? 'በቅርቡ' : 'Coming soon'})`}
+          title={t.navProfile}
+          className="flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 py-1 cursor-not-allowed"
+        >
+          <span aria-hidden="true" className="material-symbols-outlined text-[20px]">person</span>
           <span className="font-label-sm text-label-sm mt-0.5">{t.navProfile}</span>
-        </div>
+        </button>
       </nav>
 
       {/* ============================================================== */}
       {/* FOOTER                                                          */}
       {/* ============================================================== */}
       <footer className="mt-auto hidden md:block border-t border-outline-variant/30 dark:border-outline/20 bg-surface-container-lowest dark:bg-inverse-surface py-5 px-margin text-center transition-colors duration-200">
-        <div className="max-w-7xl mx-auto flex items-center justify-between text-xs text-on-surface-variant dark:text-outline-variant font-label-md">
+        <div className="max-w-7xl mx-auto flex items-center justify-between text-xs text-gray-700 dark:text-gray-300 font-label-md">
           <span>{t.footerCopyright}</span>
           <div className="flex items-center gap-4">
             <span className="hover:text-primary transition-colors cursor-pointer">{t.footerPrivacy}</span>
@@ -937,17 +1206,5 @@ function FindServiceContent() {
 }
 
 export default function FindServicePage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-background">
-          <span className="material-symbols-outlined text-[36px] animate-spin text-primary-container">
-            progress_activity
-          </span>
-        </div>
-      }
-    >
-      <FindServiceContent />
-    </Suspense>
-  );
+  return <FindServiceContent />;
 }
