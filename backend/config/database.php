@@ -3,6 +3,13 @@
 use Illuminate\Support\Str;
 use Pdo\Mysql;
 
+$mysqlSslOptions = extension_loaded('pdo_mysql') ? array_filter([
+    (class_exists(Mysql::class) ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env(
+        'MYSQL_ATTR_SSL_CA',
+        is_file('/etc/ssl/certs/ca-certificates.crt') ? '/etc/ssl/certs/ca-certificates.crt' : null
+    ),
+]) : [];
+
 return [
 
     /*
@@ -59,9 +66,7 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
+            'options' => $mysqlSslOptions,
         ],
 
         'mariadb' => [
@@ -79,9 +84,7 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
+            'options' => $mysqlSslOptions,
         ],
 
         'pgsql' => [

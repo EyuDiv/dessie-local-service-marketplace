@@ -20,24 +20,26 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => (function () {
-        $isProduction = strtolower(trim((string) env('APP_ENV', 'local'))) === 'production';
-        $rawOrigins = env('CORS_ALLOWED_ORIGINS');
-        $trimmed = trim((string) $rawOrigins);
+        $origins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
 
-        if ($trimmed !== '') {
-            return array_values(array_filter(array_map('trim', explode(',', $rawOrigins))));
+        foreach ([env('CORS_ALLOWED_ORIGINS'), env('FRONTEND_URL')] as $rawOrigins) {
+            $trimmed = trim((string) $rawOrigins);
+            if ($trimmed !== '') {
+                foreach (explode(',', $trimmed) as $origin) {
+                    $clean = rtrim(trim($origin), '/');
+                    if ($clean !== '' && !in_array($clean, $origins, true)) {
+                        $origins[] = $clean;
+                    }
+                }
+            }
         }
 
-        // In production, fail-closed: never silently allow wildcard '*'
-        if ($isProduction) {
-            return [];
-        }
-
-        // Non-production (local/development/testing): allow wildcard for developer convenience
-        return ['*'];
+        return $origins;
     })(),
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => [
+        '#^https://([a-zA-Z0-9-]+\.)*vercel\.app$#',
+    ],
 
     'allowed_headers' => ['*'],
 
@@ -45,6 +47,6 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => false,
+    'supports_credentials' => true,
 
 ];

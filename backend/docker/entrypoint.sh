@@ -12,6 +12,10 @@ mkdir -p /var/www/storage/framework/cache/data \
 chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
+# Adapt Nginx listen port to Render/cloud $PORT if provided (defaults to 80)
+LISTEN_PORT="${PORT:-80}"
+sed -i "s/listen 80;/listen ${LISTEN_PORT};/g; s/listen \[::\]:80;/listen [::]:${LISTEN_PORT};/g" /etc/nginx/http.d/default.conf || true
+
 # Link storage
 php artisan storage:link || true
 

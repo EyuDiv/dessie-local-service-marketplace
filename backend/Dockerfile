@@ -2,6 +2,7 @@ FROM php:8.3-fpm-alpine
 
 # Install system utilities and build dependencies
 RUN apk add --no-cache \
+    ca-certificates \
     nginx \
     supervisor \
     curl \
@@ -12,7 +13,8 @@ RUN apk add --no-cache \
     git \
     oniguruma-dev \
     postgresql-dev \
-    libzip-dev
+    libzip-dev \
+    && update-ca-certificates
 
 # Install PHP extensions required by Laravel & databases
 RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip
